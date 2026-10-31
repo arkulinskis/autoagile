@@ -7,7 +7,7 @@ through an HTTP API: pull the next card, claim, log, tick criteria, hand in for 
 Built on [Anvil](https://anvil.works).
 
 - **App repo:** github.com/arkulinskis/autoagile (branch `master`). Anvil pulls `master`.
-- **Live:** not published yet (expected https://autoagile.anvil.app).
+- **Live:** https://autoagile.anvil.app
 
 ## What it does
 
