@@ -68,6 +68,54 @@ db_schema:
     indexes: []
     server: full
     title: Agents
+  alerts:
+    client: none
+    columns:
+    - admin_ui:
+        order: 0
+        width: 200
+      name: team
+      target: teams
+      type: link_single
+    - admin_ui:
+        order: 1
+        width: 200
+      name: kind
+      type: string
+    - admin_ui:
+        order: 2
+        width: 200
+      name: dedupe
+      type: string
+    - admin_ui:
+        order: 3
+        width: 200
+      name: card
+      target: cards
+      type: link_single
+    - admin_ui:
+        order: 4
+        width: 200
+      name: text
+      type: string
+    - admin_ui:
+        order: 5
+        width: 200
+      name: created
+      type: datetime
+    - admin_ui:
+        order: 6
+        width: 200
+      name: sent
+      type: simpleObject
+    - admin_ui:
+        order: 7
+        width: 200
+      name: is_demo
+      type: bool
+    indexes: []
+    server: full
+    title: Alerts
   app_settings:
     client: none
     columns:
@@ -233,6 +281,16 @@ db_schema:
         width: 200
       name: is_demo
       type: bool
+    - admin_ui:
+        order: 28
+        width: 200
+      name: column
+      type: string
+    - admin_ui:
+        order: 29
+        width: 200
+      name: source
+      type: string
     indexes: []
     server: full
     title: Cards
@@ -425,9 +483,84 @@ db_schema:
         width: 200
       name: is_demo
       type: bool
+    - admin_ui:
+        order: 5
+        width: 200
+      name: notify
+      type: bool
     indexes: []
     server: full
     title: Crew members
+  requests:
+    client: none
+    columns:
+    - admin_ui:
+        order: 0
+        width: 200
+      name: team
+      target: teams
+      type: link_single
+    - admin_ui:
+        order: 1
+        width: 200
+      name: title
+      type: string
+    - admin_ui:
+        order: 2
+        width: 200
+      name: body
+      type: string
+    - admin_ui:
+        order: 3
+        width: 200
+      name: by_user
+      target: users
+      type: link_single
+    - admin_ui:
+        order: 4
+        width: 200
+      name: votes
+      type: simpleObject
+    - admin_ui:
+        order: 5
+        width: 200
+      name: status
+      type: string
+    - admin_ui:
+        order: 6
+        width: 200
+      name: answer
+      type: string
+    - admin_ui:
+        order: 7
+        width: 200
+      name: answered_at
+      type: datetime
+    - admin_ui:
+        order: 8
+        width: 200
+      name: answered_by
+      target: users
+      type: link_single
+    - admin_ui:
+        order: 9
+        width: 200
+      name: card
+      target: cards
+      type: link_single
+    - admin_ui:
+        order: 10
+        width: 200
+      name: created
+      type: datetime
+    - admin_ui:
+        order: 11
+        width: 200
+      name: is_demo
+      type: bool
+    indexes: []
+    server: full
+    title: Requests
   sprints:
     client: none
     columns:
@@ -569,6 +702,31 @@ db_schema:
         width: 200
       name: is_demo
       type: bool
+    - admin_ui:
+        order: 14
+        width: 200
+      name: columns
+      type: simpleObject
+    - admin_ui:
+        order: 15
+        width: 200
+      name: alerts
+      type: simpleObject
+    - admin_ui:
+        order: 16
+        width: 200
+      name: alerts_checked
+      type: datetime
+    - admin_ui:
+        order: 17
+        width: 200
+      name: ask_code
+      type: string
+    - admin_ui:
+        order: 18
+        width: 200
+      name: promise_days
+      type: number
     indexes: []
     server: full
     title: Crews
@@ -678,7 +836,7 @@ native_deps:
     \ its own <link rel=\"icon\">, so drop any other icon link. */\n(function () {\n  function keep() {\n    var ours = document.getElementById('ui-favicon');\n\
     \    if (!ours) return;\n    document.querySelectorAll('link[rel~=\"icon\"]').forEach(function (l) { if (l !== ours) l.remove();\
     \ });\n  }\n  keep();\n  document.addEventListener('DOMContentLoaded', keep);\n  window.addEventListener('load', keep);\n\
-    })();\n</script>\n<link rel=\"stylesheet\" href=\"_/theme/app.css?v=39d0a15ed7\">\n<script src=\"_/theme/app.js?v=58acd21e4f\"\
+    })();\n</script>\n<link rel=\"stylesheet\" href=\"_/theme/app.css?v=0af1465af8\">\n<script src=\"_/theme/app.js?v=9f86ff2542\"\
     ></script>\n"
 package_name: AutoAgile
 runtime_options:
@@ -702,6 +860,9 @@ services:
   server_config:
     user_table: users
   source: /runtime/services/anvil/users.yml
+- client_config: {}
+  server_config: {}
+  source: /runtime/services/anvil/email.yml
 startup:
   module: Main
   type: form

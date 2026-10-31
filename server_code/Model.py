@@ -5,7 +5,13 @@
   open sandbox: every signed-in person can use them, nobody but an admin can rename or delete them.
 - card_dict / agent_dict / event_dict: rows -> plain dicts for the browser and the agent API.
 - log(): the activity timeline (moves, comments, agent run logs).
+- columns_of(team): the crew's board columns. Every column belongs to one of the four stages (ready, doing,
+  review, done) that the metrics, levels and agent API understand; a crew can split a stage into several
+  columns (Doing -> Build + Test) with their own WIP limits. card["column"] is a column id or None (= the
+  first column of the card's stage).
 """
+import re
+
 import datetime as dt
 
 import anvil.server
@@ -38,6 +44,58 @@ LEVELS = [
     {"n": 4, "key": "year", "name": "YEAR", "title": "Roadmap",
      "blurb": "Plan a year in quarters and estimate it from your measured capacity."},
 ]
+
+
+MAX_COLUMNS = 12
+
+
+def default_columns():
+    return [{"id": s, "name": STATUS_LABEL[s], "stage": s, "wip": None} for s in BOARD]
+
+
+def clean_columns(cols):
+    """A safe list of columns: known stages, in stage order, each stage at least once, unique ids."""
+    out, seen = [], set()
+    for c in (cols or [])[:MAX_COLUMNS]:
+        if not isinstance(c, dict) or c.get("stage") not in BOARD:
+            continue
+        cid = str(c.get("id") or "")
+        if not re.match(r"^[a-z0-9_]{1,24}$", cid) or cid in seen:
+            continue
+        name = C.text(c.get("name"), 20) or STATUS_LABEL[c["stage"]]
+        try:
+            wip = int(c.get("wip")) if c.get("wip") not in (None, "", 0, "0") else None
+        except (TypeError, ValueError):
+            wip = None
+        if wip is not None and not 1 <= wip <= 50:
+            wip = None
+        seen.add(cid)
+        out.append({"id": cid, "name": name, "stage": c["stage"], "wip": wip})
+    for d in default_columns():
+        if not any(c["stage"] == d["stage"] for c in out):
+            if d["id"] in seen:
+                d["id"] = d["id"] + "_1"
+            out.append(d)
+    out.sort(key=lambda c: BOARD.index(c["stage"]))  # stable: keeps the crew's order inside a stage
+    return out
+
+
+def columns_of(t):
+    return clean_columns(t["columns"]) if t["columns"] else default_columns()
+
+
+def column_of(c, cols):
+    """The column id a card sits in."""
+    stage = "ready" if c["status"] == "backlog" else c["status"]
+    ids = [x["id"] for x in cols if x["stage"] == stage]
+    return c["column"] if c["column"] in ids else (ids[0] if ids else stage)
+
+
+def column_name(cols, cid):
+    for x in cols:
+        if x["id"] == cid:
+            return x["name"]
+    return cid
 
 
 def level_info(n):
@@ -124,7 +182,8 @@ def card_dict(c, full=False):
          "fit": gate.get("fit"), "verdict": gate.get("verdict"), "ready": ready["passed"], "ready_total": ready["total"],
          "agent_ready": ready["ready"], "acc_done": sum(1 for x in acc if x.get("done")), "acc_total": len(acc),
          "age": days_since(c["moved_at"]), "created": C.iso(c["created"]), "started": C.iso(c["started"]),
-         "done_at": C.iso(c["done_at"]), "review_at": C.iso(c["review_at"]), "demo": bool(c["is_demo"])}
+         "done_at": C.iso(c["done_at"]), "review_at": C.iso(c["review_at"]), "column": c["column"], "source": c["source"] or "",
+         "demo": bool(c["is_demo"])}
     if full:
         d.update(body=c["body"] or "", acceptance=acc, gates=a, gate=gate, readiness=ready, links=c["links"] or [],
                  updated=C.iso(c["updated"]), created_by=C.name_of(c["created_by"]) if c["created_by"] else "An agent")
@@ -166,7 +225,7 @@ def log(team, kind, text, card=None, user=None, agent=None, when=None, demo=Fals
 
 def delete_team_rows(t):
     """Delete a crew and everything in it (children first)."""
-    for table in ("events", "cards", "sprints", "epics", "agents", "members"):
+    for table in ("alerts", "requests", "events", "cards", "sprints", "epics", "agents", "members"):
         for r in getattr(app_tables, table).search(team=t):
             r.delete()
     t.delete()

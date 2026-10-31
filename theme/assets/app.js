@@ -416,6 +416,8 @@
       '<a href="#crew" data-go="crew">' + UI.icon('users') + 'Crew settings</a>' +
       '<a href="#agents" data-go="agents">' + UI.icon('bot') + 'AI agents</a>' +
       '<a href="#insights" data-go="insights">' + UI.icon('chart') + 'Insights</a>' +
+      '<a href="#requests" data-go="requests">' + UI.icon('megaphone') + 'Requests</a>' +
+      '<a href="#import" data-go="import">' + UI.icon('upload') + 'Import and export</a>' +
       (me.is_admin ? '<a href="#admin" data-go="admin">' + UI.icon('shield') + 'Admin</a>' : '') +
       '<div class="ui-menu-block"><span class="small muted">Appearance</span>' + themeSwitch() + '</div>' +
       '<button type="button" data-feedback>' + UI.icon('chat') + 'Send feedback</button>' +
@@ -493,7 +495,11 @@
     play: '<path d="M7 4v16l13-8z"/>',
     pause: '<path d="M8 5v14M16 5v14"/>',
     link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
-    up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>', top: '<path d="M6 4h12M6 14l6-6 6 6M12 8v12"/>'
+    up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>', top: '<path d="M6 4h12M6 14l6-6 6 6M12 8v12"/>',
+    settings: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    download: '<path d="M12 4v11M7 10l5 5 5-5M4 20h16"/>', upload: '<path d="M12 16V5M7 10l5-5 5 5M4 20h16"/>',
+    megaphone: '<path d="M3 10v4h4l7 5V5L7 10z"/><path d="M18 9a4 4 0 0 1 0 6"/>',
+    printer: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="1"/><path d="M7 14h10v7H7z"/>'
   });
 
   /* ---------------------------------------------------------------- crews */
@@ -527,7 +533,8 @@
   AA.crewChip = function () {
     var c = AA.current();
     if (!c) return '';
-    return '<button type="button" class="aa-crewchip" data-crew-switch title="Switch crew" aria-label="Crew ' + esc(c.name) + ', switch crew">' +
+    return '<button type="button" class="aa-kbtn" data-palette title="Jump anywhere (Ctrl K or /)" aria-label="Search and jump">CTRL K</button>' +
+      '<button type="button" class="aa-crewchip" data-crew-switch title="Switch crew" aria-label="Crew ' + esc(c.name) + ', switch crew">' +
       '<span class="aa-led ' + (c.demo ? 'pink' : 'on') + '"></span>' + esc(c.key) + ' <span class="faint">L' + c.level + '</span>' + UI.icon('chevron') + '</button>';
   };
   AA.switcher = function () {
@@ -746,6 +753,7 @@
   }
   function hideTip() { if (tip) tip.style.display = 'none'; }
   AA.hideTip = hideTip;
+  AA.showTip = showTip;
   function nice(max) {
     if (max <= 0) return 4;
     var p = Math.pow(10, Math.floor(Math.log10(max))), f = max / p;
@@ -921,10 +929,174 @@
   window.addEventListener('hashchange', function () { redraws = []; hideTip(); });
   AA.shortDate = function (iso) { return UI.fmtDate(iso, { day: 'numeric', month: 'short' }); };
 
+  /* ---------------------------------------------------------------- d3 (self-hosted in assets/, loaded only by pages that chart with it) */
+  AA.d3 = function () {
+    if (window.d3) return Promise.resolve(window.d3);
+    if (!AA._d3) {
+      AA._d3 = new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = '_/theme/d3.v7.9.0.min.js';
+        s.onload = function () { resolve(window.d3); };
+        s.onerror = function () { AA._d3 = null; reject(new Error('The charts could not load. Check your connection and reload.')); };
+        document.head.appendChild(s);
+      });
+    }
+    return AA._d3;
+  };
+
+  /* ---------------------------------------------------------------- files: CSV in and out, downloads */
+  AA.download = function (name, text, type) {
+    var blob = new Blob([text], { type: (type || 'text/plain') + ';charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  };
+  AA.toCSV = function (rows) {
+    return rows.map(function (r) {
+      return r.map(function (v) { var s = v == null ? '' : String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(',');
+    }).join('\r\n') + '\r\n';
+  };
+  /* RFC 4180 CSV -> array of rows (quoted fields, "" escapes, newlines inside quotes, a BOM, ; or , or tab). */
+  AA.parseCSV = function (text) {
+    text = String(text || '').replace(/^﻿/, '');
+    var first = text.split(/\r?\n/)[0] || '', sep = ',';
+    [';', '\t'].forEach(function (c) { if (first.split(c).length > first.split(sep).length) sep = c; });
+    var rows = [], row = [], f = '', q = false, i = 0, n = text.length, ch;
+    for (; i < n; i++) {
+      ch = text[i];
+      if (q) {
+        if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; }
+        else f += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === sep) { row.push(f); f = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+      else f += ch;
+    }
+    if (f !== '' || row.length) { row.push(f); rows.push(row); }
+    return rows.filter(function (r) { return r.length > 1 || (r[0] || '').trim() !== ''; });
+  };
+
+  /* ---------------------------------------------------------------- the filter language
+     The words you add cards with also find them: @name, #bug (type) or #label, !1 (priority), ~5 (points),
+     >3 / <8 (points), +epic, is:blocked is:agent is:human is:mine is:unestimated is:ready, plain words (title, key). */
+  AA.parseQuery = function (q) {
+    var o = { words: [], who: [], tags: [], prio: [], pts: [], gt: null, lt: null, epic: [], is: [] };
+    String(q || '').toLowerCase().split(/\s+/).forEach(function (w) {
+      if (!w) return;
+      var m;
+      if (w[0] === '@' && w.length > 1) o.who.push(w.slice(1));
+      else if (w[0] === '#' && w.length > 1) o.tags.push(w.slice(1));
+      else if ((m = w.match(/^!p?([0-3])$/))) o.prio.push(+m[1]);
+      else if ((m = w.match(/^~(\d{1,2})$/))) o.pts.push(+m[1]);
+      else if ((m = w.match(/^>(\d{1,2})$/))) o.gt = +m[1];
+      else if ((m = w.match(/^<(\d{1,2})$/))) o.lt = +m[1];
+      else if (w[0] === '+' && w.length > 1) o.epic.push(w.slice(1));
+      else if (w.indexOf('is:') === 0 && w.length > 3) o.is.push(w.slice(3));
+      else o.words.push(w);
+    });
+    o.empty = !(o.words.length || o.who.length || o.tags.length || o.prio.length || o.pts.length || o.gt != null || o.lt != null || o.epic.length || o.is.length);
+    return o;
+  };
+  AA.match = function (c, q, meId) {
+    var o = typeof q === 'string' ? AA.parseQuery(q) : q;
+    if (o.empty) return true;
+    var hay = (c.key + ' ' + c.title).toLowerCase(), name = c.assignee ? c.assignee.name.toLowerCase().replace(/\s+/g, '') : '';
+    var labels = (c.labels || []).map(function (l) { return l.toLowerCase(); }), epic = c.epic ? c.epic.title.toLowerCase().replace(/\s+/g, '') : '';
+    if (!o.words.every(function (w) { return hay.indexOf(w) >= 0; })) return false;
+    if (!o.who.every(function (w) { return w === 'me' ? (c.assignee && c.assignee.id === meId) : w === 'none' ? !c.assignee : name.indexOf(w) === 0; })) return false;
+    if (!o.tags.every(function (t) { return c.type === t || labels.indexOf(t) >= 0; })) return false;
+    if (o.prio.length && o.prio.indexOf(c.priority) < 0) return false;
+    if (o.pts.length && o.pts.indexOf(c.points) < 0) return false;
+    if (o.gt != null && !(c.points != null && c.points > o.gt)) return false;
+    if (o.lt != null && !(c.points != null && c.points < o.lt)) return false;
+    if (!o.epic.every(function (e) { return epic.indexOf(e) === 0; })) return false;
+    return o.is.every(function (k) {
+      if (k === 'blocked') return c.blocked;
+      if (k === 'agent') return c.assignee && c.assignee.kind === 'agent';
+      if (k === 'human') return c.assignee && c.assignee.kind === 'user';
+      if (k === 'mine') return c.assignee && c.assignee.id === meId;
+      if (k === 'unestimated') return c.points == null;
+      if (k === 'ready') return c.agent_ready;
+      return true;
+    });
+  };
+  AA.queryHelp = 'Filter: words, @name, #bug or #label, !1, ~5, >3, +epic, is:blocked, is:agent, is:mine, is:unestimated';
+
+  /* ---------------------------------------------------------------- command palette (Ctrl K, or / when not typing) */
+  var GO = [['deck', 'Deck', 'deck', 'g d'], ['board', 'Board', 'board', 'g b'], ['backlog', 'Backlog', 'list', 'g l'], ['backlog/party', 'Estimation Party', 'gate', ''],
+    ['plan', 'Plan', 'calendar', 'g p'], ['reports', 'Reports', 'chart', 'g r'], ['requests', 'Requests', 'flag', 'g q'], ['agents', 'AI agents', 'bot', 'g a'],
+    ['insights', 'Insights', 'chart', 'g i'], ['crew', 'Crew settings', 'users', 'g s'], ['import', 'Import and export', 'layers', 'g x']];
+  AA.palette = function () {
+    if (!UI.me || document.querySelector('.aa-pal')) return;
+    var crew = AA.current(), items = [], sel = 0, seq = 0;
+    var m = UI.modal('<div class="aa-pal"><input type="text" data-pq placeholder="Jump to a page or card, or type a new card title..." aria-label="Search" autocomplete="off">' +
+      '<div class="aa-pal-list" data-pl role="listbox"></div><p class="aa-pal-foot">↑↓ pick · Enter go · Esc close · ' +
+      GO.filter(function (g) { return g[3]; }).map(function (g) { return '<kbd>' + g[3] + '</kbd> ' + esc(g[1]); }).join(' · ') + '</p></div>', { wide: true });
+    var input = m.el.querySelector('[data-pq]'), list = m.el.querySelector('[data-pl]');
+    function draw() {
+      list.innerHTML = items.length ? items.map(function (it, i) {
+        return '<button type="button" role="option" aria-selected="' + (i === sel) + '" class="' + (i === sel ? 'on' : '') + '" data-pi="' + i + '">' +
+          '<span class="ic">' + (it.key ? '<span class="key">' + esc(it.key) + '</span>' : UI.icon(it.icon || 'zap')) + '</span><span class="tx">' + esc(it.label) + '</span>' +
+          (it.hint ? '<span class="hint">' + esc(it.hint) + '</span>' : '') + '</button>';
+      }).join('') : '<p class="muted small" style="padding:10px">Nothing found.</p>';
+      var on = list.querySelector('.on'); if (on && on.scrollIntoView) on.scrollIntoView({ block: 'nearest' });
+    }
+    function build(cards) {
+      var q = input.value.trim(), lq = q.toLowerCase();
+      items = GO.filter(function (g) { return !lq || g[1].toLowerCase().indexOf(lq) >= 0; }).map(function (g) { return { label: g[1], icon: g[2], go: g[0], hint: g[3] }; });
+      (cards || []).forEach(function (c) { items.push({ key: c.key, label: c.title, hint: AA.STATUS[c.status], card: c.key }); });
+      if (q.length >= 3 && crew) items.push({ label: 'New card: ' + q, icon: 'plus', add: q, hint: crew.key + ' backlog' });
+      if (lq.indexOf('crew') >= 0 || lq.indexOf('switch') >= 0) items.push({ label: 'Switch crew', icon: 'users', sw: true });
+      sel = Math.min(sel, Math.max(0, items.length - 1));
+      draw();
+    }
+    var t = null;
+    input.addEventListener('input', function () {
+      sel = 0; build([]);
+      clearTimeout(t);
+      var q = input.value.trim(), my = ++seq;
+      if (!q || !crew) return;
+      t = setTimeout(function () { UI.apiQuiet('search_cards', crew.id, q).then(function (r) { if (my === seq) build(r.cards); }, function () {}); }, 160);
+    });
+    function run(it) {
+      if (!it) return;
+      m.close();
+      if (it.go) UI.go.apply(null, it.go.split('/'));
+      else if (it.card) UI.go('card', it.card);
+      else if (it.sw) AA.loadCrews().then(AA.switcher);
+      else if (it.add) UI.api('quick_add', crew.id, it.add).then(function (r) { UI.toast(r.card.key + ' added to the backlog', 'ok'); UI.go('card', r.card.key); });
+    }
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); draw(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); draw(); }
+      else if (e.key === 'Enter') { e.preventDefault(); run(items[sel]); }
+    });
+    list.addEventListener('click', function (e) { var b = e.target.closest('[data-pi]'); if (b) run(items[+b.getAttribute('data-pi')]); });
+    build([]);
+    setTimeout(function () { input.focus(); }, 40);
+  };
+  var chord = null;
+  document.addEventListener('keydown', function (e) {
+    if (!UI.me) return;
+    var tag = (e.target && e.target.tagName) || '', typing = /INPUT|TEXTAREA|SELECT/.test(tag) || (e.target && e.target.isContentEditable);
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); AA.palette(); return; }
+    if (typing || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('.ui-modal-wrap, .ui-modal')) return;
+    if (e.key === '/') { e.preventDefault(); AA.palette(); return; }
+    if (chord && Date.now() - chord < 900) {
+      var hit = GO.filter(function (g) { return g[3] === 'g ' + e.key.toLowerCase(); })[0];
+      chord = null;
+      if (hit) { e.preventDefault(); UI.go.apply(null, hit[0].split('/')); }
+      return;
+    }
+    if (e.key === 'g') chord = Date.now();
+  });
+
   /* ---------------------------------------------------------------- shared clicks */
   document.addEventListener('click', function (e) {
-    var el = e.target.closest && e.target.closest('[data-crew-switch],[data-card],[data-copy]');
+    var el = e.target.closest && e.target.closest('[data-crew-switch],[data-card],[data-copy],[data-palette]');
     if (!el) return;
+    if (el.hasAttribute('data-palette')) { e.preventDefault(); AA.palette(); return; }
     if (el.hasAttribute('data-crew-switch')) { e.preventDefault(); AA.loadCrews().then(AA.switcher); }
     else if (el.hasAttribute('data-card')) { if (el.closest('[data-nocardclick]')) return; e.preventDefault(); UI.go('card', el.getAttribute('data-card')); }
     else if (el.hasAttribute('data-copy')) {
@@ -1384,7 +1556,7 @@
 
   UI.page('backlog', { title: 'Backlog', nav: 'Backlog', icon: 'list', auth: 'user', order: 30 }, function (view, ctx) {
     view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:420px"></div></div>';
-    var filter = UI.store.get('bl.filter', 'all'), data = null, crewRef = null;
+    var filter = UI.store.get('bl.filter', 'all'), data = null, crewRef = null, q = '';
     if (ctx.args[0] === 'party') return AA.withCrew(view, function (crew) { return party(view, crew); });
 
     function draw() {
@@ -1394,7 +1566,7 @@
         if (filter === 'agent') return c.agent_ready;
         if (filter === 'bugs') return c.type === 'bug';
         return true;
-      });
+      }).filter(function (c) { return AA.match(c, q, UI.me && UI.me.id); });
       var unest = d.cards.filter(function (c) { return c.points == null; }).length;
       var est = d.cards.length - unest;
       var planned = d.sprints.filter(function (s) { return s.state === 'planned'; })[0] || null;
@@ -1402,7 +1574,7 @@
       view.innerHTML = '<div class="ui-wrap">' +
         '<div class="aa-head"><div><div class="eyebrow">Backlog // ' + esc(d.crew.key) + '</div><h1>Backlog</h1>' +
         '<div class="sub">' + UI.plural(d.cards.length, 'card') + ' · ' + est + ' estimated · ' + d.cards.filter(function (c) { return c.agent_ready; }).length + ' agent-ready</div></div>' +
-        '<div class="ui-row"><a class="ui-btn' + (unest ? ' primary' : '') + '" href="#backlog/party" data-go="backlog/party">' + UI.icon('gate') + 'Estimation party' + (unest ? ' (' + unest + ')' : '') + '</a></div></div>' +
+        '<div class="ui-row"><a class="ui-btn" href="#import" data-go="import">' + UI.icon('upload') + 'Import</a><a class="ui-btn' + (unest ? ' primary' : '') + '" href="#backlog/party" data-go="backlog/party">' + UI.icon('gate') + 'Estimation party' + (unest ? ' (' + unest + ')' : '') + '</a></div></div>' +
         AA.demoNote(crew) +
         AA.win('Quick add', '<form class="bl-add" data-add autocomplete="off"><input type="text" name="text" maxlength="300" required placeholder="Fix login timeout #bug !1 ~3 @claude +chat" aria-label="New card">' +
           (sprintOpts && d.level >= 2 ? '<select name="sprint" aria-label="Add to"><option value="">To the backlog</option>' + sprintOpts + '</select>' : '') +
@@ -1416,7 +1588,8 @@
           '</div>' : '') +
         '<div class="bl-bar"><div class="ui-seg" role="group" aria-label="Filter">' + [['all', 'All'], ['unest', 'Unestimated'], ['agent', 'Agent-ready'], ['bugs', 'Bugs']].map(function (f) {
           return '<button type="button" data-filter="' + f[0] + '" class="' + (filter === f[0] ? 'on' : '') + '">' + f[1] + '</button>';
-        }).join('') + '</div><span class="faint small">Ranked: the top is next. ' + (planned ? 'The arrow adds a card to ' + esc(planned.name) + '.' : '') + '</span></div>' +
+        }).join('') + '</div><input type="search" data-q value="' + esc(q) + '" placeholder="Filter: @name #label !1 ~5 +epic is:blocked" aria-label="Filter cards" title="' + esc(AA.queryHelp) + '" style="max-width:320px;min-height:38px;padding:6px 10px">' +
+        '<span class="faint small">Ranked: the top is next. ' + (planned ? 'The arrow adds a card to ' + esc(planned.name) + '.' : '') + '</span></div>' +
         (cards.length ? '<div class="bl-list"><div class="bl-row hd"><span>#</span><span>Key</span><span>Card</span><span>Pts</span><span>Fit · Ready</span><span>Who</span><span></span></div>' +
           cards.map(function (c, i) { return row(c, i, d, planned); }).join('') + '</div>'
           : '<div class="ui-empty">' + UI.icon('list') + '<h3>' + (d.cards.length ? 'Nothing matches' : 'The backlog is empty') + '</h3><p>Type a card in Quick add above.</p></div>') + '</div>';
@@ -1427,6 +1600,12 @@
         return UI.api('get_backlog', crew.id).then(function (d) { data = d; draw(); });
       });
     }
+    view.addEventListener('input', function (e) {
+      if (!e.target.matches('[data-q]')) return;
+      q = e.target.value;
+      var pos = e.target.selectionStart; draw();
+      var qi = view.querySelector('[data-q]'); qi.focus(); qi.setSelectionRange(pos, pos);
+    });
     view.addEventListener('submit', function (e) {
       if (e.target.matches('[data-add]')) {
         e.preventDefault();
@@ -1489,46 +1668,94 @@
 /* ===== board.html ===== */
 (function () {
   var esc = UI.esc;
-  var COLS = [['ready', 'Ready'], ['doing', 'Doing'], ['review', 'Review'], ['done', 'Done']];
+  var LANES = [['none', 'No lanes'], ['people', 'Lanes: people'], ['epic', 'Lanes: epics'], ['priority', 'Lanes: priority'], ['type', 'Lanes: type']];
+  var PRIO = ['P0 · critical', 'P1 · high', 'P2 · normal', 'P3 · low'];
+
+  /* columns from the server; older replies only have stage columns */
+  function boardColumns(d) {
+    if (d.board_columns) return d.board_columns;
+    return ['ready', 'doing', 'review', 'done'].map(function (s) { return { id: s, name: AA.STATUS[s], stage: s, limit: d.wip[s] || null, split: false, cards: d.columns[s] }; });
+  }
+  function laneOf(mode, c) {
+    if (mode === 'people') return c.assignee ? (c.assignee.kind === 'agent' ? 'a:' : 'u:') + c.assignee.id : 'none';
+    if (mode === 'epic') return c.epic ? c.epic.id : 'none';
+    if (mode === 'priority') return String(c.priority);
+    if (mode === 'type') return c.type;
+    return 'all';
+  }
+  function lanesFor(mode, d, cards) {
+    if (mode === 'none') return [{ key: 'all', name: null }];
+    var out = [];
+    if (mode === 'people') {
+      d.people.forEach(function (p) { out.push({ key: (p.kind === 'agent' ? 'a:' : 'u:') + p.id, name: p.name, who: p }); });
+      out.push({ key: 'none', name: 'Unassigned' });
+    } else if (mode === 'epic') {
+      d.epics.forEach(function (e) { out.push({ key: e.id, name: e.title, color: e.color }); });
+      out.push({ key: 'none', name: 'No epic' });
+    } else if (mode === 'priority') [0, 1, 2, 3].forEach(function (p) { out.push({ key: String(p), name: PRIO[p] }); });
+    else AA.TYPES.forEach(function (t) { out.push({ key: t, name: t }); });
+    var used = {};
+    cards.forEach(function (c) { used[laneOf(mode, c)] = true; });
+    return out.filter(function (l) { return used[l.key]; });
+  }
+  function laneFields(mode, key) {
+    if (mode === 'people') return { assignee: key === 'none' ? null : { kind: key[0] === 'a' ? 'agent' : 'user', id: key.slice(2) } };
+    if (mode === 'epic') return { epic_id: key === 'none' ? null : key };
+    if (mode === 'priority') return { priority: +key };
+    if (mode === 'type') return { type: key };
+    return null;
+  }
 
   UI.page('board', { title: 'Board', nav: 'Board', icon: 'board', auth: 'user', order: 20 }, function (view, ctx) {
-    var data = null, filter = UI.store.get('bd.filter', 'all'), q = '', phoneCol = UI.store.get('bd.col', 'doing'), crewRef = null;
+    var data = null, filter = UI.store.get('bd.filter', 'all'), q = '', lanes = UI.store.get('bd.lanes', 'none'), phoneCol = UI.store.get('bd.pcol', null), crewRef = null;
     view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:420px"></div></div>';
 
     function visible(c) {
       if (filter === 'mine' && !(c.assignee && c.assignee.kind === 'user' && c.assignee.id === data.me)) return false;
       if (filter === 'agents' && !(c.assignee && c.assignee.kind === 'agent')) return false;
       if (filter === 'humans' && c.assignee && c.assignee.kind === 'agent') return false;
-      if (q && (c.title + ' ' + c.key).toLowerCase().indexOf(q) < 0) return false;
-      return true;
+      return AA.match(c, q, data.me);
     }
     function draw() {
-      var d = data, crew = crewRef;
+      var d = data, crew = crewRef, cols = boardColumns(d);
+      if (!cols.some(function (c) { return c.id === phoneCol; })) phoneCol = (cols.filter(function (c) { return c.stage === 'doing'; })[0] || cols[0]).id;
+      var all = [];
+      cols.forEach(function (c) { c.cards.forEach(function (x) { all.push(x); }); });
+      var shown = all.filter(visible), ls = lanesFor(lanes, d, shown);
       var head = d.sprint ? esc(d.sprint.name) + ' · ' + d.sprint.done_points + '/' + d.sprint.points + ' pts · ends ' + esc(AA.shortDate(d.sprint.end))
         : (d.level >= 2 ? 'No sprint running' : 'Kanban flow · pull, don\'t push');
       var banner = '';
       if (d.level >= 2 && !d.sprint) banner = '<div class="bd-banner"><span class="aa-led warn blink"></span><div class="grow"><b>No sprint is running.</b> <span class="muted">Showing everything in flow. Plan a sprint from the backlog to focus the board.</span></div><a class="ui-btn sm primary" href="#backlog" data-go="backlog">Plan a sprint</a></div>';
-      else if (d.sprint && d.sprint.goal) banner = '<div class="bd-banner"><span class="aa-led on"></span><div class="grow"><span class="faint small">SPRINT GOAL</span><br><b>' + esc(d.sprint.goal) + '</b></div><a class="ui-btn sm" href="#plan" data-go="plan">Burndown</a></div>';
+      else if (d.sprint && d.sprint.goal) banner = '<div class="bd-banner"><span class="aa-led on"></span><div class="grow"><span class="faint small">SPRINT GOAL</span><br><b>' + esc(d.sprint.goal) + '</b></div><a class="ui-btn sm" href="#reports/burnup" data-go="reports/burnup">Burn-up</a></div>';
       else if (d.level === 1) banner = '<div class="bd-banner"><span class="aa-led pink"></span><div class="grow small"><b>Level 1: KANBAN.</b> Pull the top Ready card, keep Doing under its limit, finish before you start. Sprints unlock when your flow is steady.</div><a class="ui-btn sm" href="#plan" data-go="plan">Level checks</a></div>';
+      var colHead = function (c) {
+        var over = c.limit && c.cards.length > c.limit;
+        return '<header class="bd-col-head' + (over ? ' over' : '') + (phoneCol === c.id ? ' show' : '') + '"><span class="aa-led ' + (over ? 'bad blink' : c.cards.length ? 'on' : '') + '"></span>' +
+          '<b>' + (c.split ? '<small>' + esc(AA.STATUS[c.stage]) + ' ›</small>' : '') + esc(c.name) + '</b><span class="n">' + c.cards.length + (c.limit ? '/' + c.limit : '') + '</span></header>';
+      };
+      var body = function (c, lane) {
+        var cards = c.cards.filter(function (x) { return visible(x) && (lane.key === 'all' || laneOf(lanes, x) === lane.key); });
+        return '<div class="bd-body' + (phoneCol === c.id ? ' show' : '') + '" data-drop="' + esc(c.id) + '" data-lane="' + esc(lane.key) + '" aria-label="' + esc(c.name) + '">' +
+          (cards.map(function (x) { return AA.card(x, { drag: true }); }).join('') ||
+            (lane.key === 'all' ? '<div class="bd-empty">' + (c.stage === 'ready' ? 'Nothing Ready. Groom the <a href="#backlog" data-go="backlog">backlog</a>.' : 'Empty') + '</div>' : '')) + '</div>';
+      };
+      var grid = '<div class="bd-scroll"><div class="bd-grid" style="--n:' + cols.length + '">' + cols.map(colHead).join('') + '</div>' +
+        ls.map(function (lane) {
+          var n = shown.filter(function (x) { return lane.key === 'all' || laneOf(lanes, x) === lane.key; }).length;
+          return '<section class="' + (lane.name ? 'bd-lane' : '') + '">' + (lane.name ? '<h3 class="bd-lane-head">' + (lane.who ? AA.who(lane.who) : lane.color ? '<span class="aa-dot" style="background:' + esc(lane.color) + '"></span>' : '') +
+            esc(lane.name) + ' <span class="c">' + n + '</span></h3>' : '') + '<div class="bd-grid" style="--n:' + cols.length + '">' + cols.map(function (c) { return body(c, lane); }).join('') + '</div></section>';
+        }).join('') + (ls.length ? '' : '<div class="bd-empty" style="margin-top:12px">No cards match the filter.</div>') + '</div>';
       view.innerHTML = '<div class="ui-wrap">' +
         '<div class="aa-head"><div><div class="eyebrow">Board // ' + esc(d.crew.key) + '</div><h1>' + esc(d.crew.name) + '</h1><div class="sub">' + head + '</div></div>' +
-        '<div class="ui-row"><a class="ui-btn" href="#backlog" data-go="backlog">' + UI.icon('list') + 'Backlog</a></div></div>' + AA.demoNote(crew) + banner +
-        '<div class="bd-tools"><div class="ui-seg" role="group" aria-label="Filter">' + [['all', 'All'], ['mine', 'Mine'], ['humans', 'Humans'], ['agents', 'Agents']].map(function (f) {
+        '<div class="ui-row"><a class="ui-btn" href="#crew" data-go="crew" title="Columns and WIP limits">' + UI.icon('settings') + 'Columns</a><a class="ui-btn" href="#backlog" data-go="backlog">' + UI.icon('list') + 'Backlog</a></div></div>' + AA.demoNote(crew) + banner +
+        '<div class="bd-tools"><div class="ui-seg" role="group" aria-label="Show">' + [['all', 'All'], ['mine', 'Mine'], ['humans', 'Humans'], ['agents', 'Agents']].map(function (f) {
           return '<button type="button" data-filter="' + f[0] + '" class="' + (filter === f[0] ? 'on' : '') + '">' + f[1] + '</button>';
-        }).join('') + '</div><input type="search" data-q placeholder="Filter cards" value="' + esc(q) + '" aria-label="Filter cards"></div>' +
-        '<div class="ui-seg bd-phonetabs" role="tablist">' + COLS.map(function (c) {
-          return '<button type="button" data-pcol="' + c[0] + '" class="' + (phoneCol === c[0] ? 'on' : '') + '">' + c[1] + ' ' + d.columns[c[0]].length + '</button>';
-        }).join('') + '</div>' +
-        '<div class="bd-cols">' + COLS.map(function (c) {
-          var cards = d.columns[c[0]], lim = d.wip[c[0]], over = lim && cards.length > lim;
-          var shown = cards.filter(visible);
-          return '<section class="bd-col' + (over ? ' over' : '') + (phoneCol === c[0] ? ' show' : '') + '" data-col="' + c[0] + '" aria-label="' + c[1] + '">' +
-            '<header class="bd-col-head"><span class="aa-led ' + (over ? 'bad blink' : cards.length ? 'on' : '') + '"></span><b>' + c[1] + '</b><span class="n">' + cards.length + (lim ? '/' + lim : '') + '</span></header>' +
-            '<div class="bd-col-body" data-drop="' + c[0] + '">' + (shown.map(function (x) { return AA.card(x, { drag: true }); }).join('') ||
-              '<div class="bd-empty">' + (c[0] === 'ready' ? 'Nothing Ready. Groom the <a href="#backlog" data-go="backlog">backlog</a>.' : 'Empty') + '</div>') + '</div></section>';
-        }).join('') + '</div></div>';
-      var qi = view.querySelector('[data-q]');
-      if (document.activeElement === document.body && q) { qi.focus(); qi.setSelectionRange(q.length, q.length); }
+        }).join('') + '</div><input type="search" data-q placeholder="Filter: words @name #bug !1 ~5 +epic is:blocked" value="' + esc(q) + '" aria-label="Filter cards" title="' + esc(AA.queryHelp) + '">' +
+        '<select data-lanes aria-label="Swimlanes">' + LANES.map(function (l) { return '<option value="' + l[0] + '"' + (lanes === l[0] ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select>' +
+        '<span class="bd-hint">' + (q ? shown.length + ' of ' + all.length + ' cards match' : 'Ctrl K jumps anywhere · ' + (lanes !== 'none' ? 'drop a card in another lane to re-assign it' : 'lanes group the board by person, epic, priority or type')) + '</span></div>' +
+        '<div class="ui-seg bd-phonetabs" role="tablist">' + cols.map(function (c) {
+          return '<button type="button" data-pcol="' + esc(c.id) + '" class="' + (phoneCol === c.id ? 'on' : '') + '">' + esc(c.name) + ' ' + c.cards.length + '</button>';
+        }).join('') + '</div>' + grid + '</div>';
     }
     function load() {
       return AA.withCrew(view, function (crew) {
@@ -1541,17 +1768,20 @@
       var f = e.target.closest('[data-filter]');
       if (f) { filter = f.getAttribute('data-filter'); UI.store.set('bd.filter', filter); draw(); return; }
       var p = e.target.closest('[data-pcol]');
-      if (p) { phoneCol = p.getAttribute('data-pcol'); UI.store.set('bd.col', phoneCol); draw(); }
+      if (p) { phoneCol = p.getAttribute('data-pcol'); UI.store.set('bd.pcol', phoneCol); draw(); }
+    });
+    view.addEventListener('change', function (e) {
+      if (e.target.matches('[data-lanes]')) { lanes = e.target.value; UI.store.set('bd.lanes', lanes); draw(); }
     });
     view.addEventListener('input', function (e) {
       if (e.target.matches('[data-q]')) {
-        q = e.target.value.trim().toLowerCase();
+        q = e.target.value;
         var pos = e.target.selectionStart; draw();
         var qi = view.querySelector('[data-q]'); qi.focus(); qi.setSelectionRange(pos, pos);
       }
     });
 
-    /* drag and drop */
+    /* drag and drop: columns, and lanes (a different lane changes the lane's field) */
     var dragId = null, ph = document.createElement('div');
     ph.className = 'bd-ph';
     view.addEventListener('dragstart', function (e) {
@@ -1584,19 +1814,21 @@
       var body = e.target.closest('[data-drop]');
       if (!body || !dragId) return;
       e.preventDefault();
-      var to = body.getAttribute('data-drop'), b = beforeCard(body, e.clientY), id = dragId;
+      var to = body.getAttribute('data-drop'), lane = body.getAttribute('data-lane'), b = beforeCard(body, e.clientY), id = dragId;
       dragId = null; ph.remove();
-      var card = null, from = null;
-      COLS.forEach(function (c) { data.columns[c[0]].forEach(function (x) { if (x.id === id) { card = x; from = c[0]; } }); });
+      var cols = boardColumns(data), card = null, from = null;
+      cols.forEach(function (c) { c.cards.forEach(function (x) { if (x.id === id) { card = x; from = c; } }); });
       if (!card) return;
-      var lim = data.wip[to], count = data.columns[to].length + (from === to ? 0 : 1);
-      var ask = (from !== to && lim && count > lim) ? UI.confirm({ title: 'Over the WIP limit', text: AA.STATUS[to] + ' allows ' + lim + ' cards. Stop starting, start finishing: are you sure?', ok: 'Move it anyway', danger: true }) : Promise.resolve(true);
+      var target = cols.filter(function (c) { return c.id === to; })[0];
+      var count = target.cards.length + (from.id === to ? 0 : 1);
+      var ask = (from.id !== to && target.limit && count > target.limit) ? UI.confirm({ title: 'Over the WIP limit', text: target.name + ' allows ' + target.limit + ' cards. Stop starting, start finishing: are you sure?', ok: 'Move it anyway', danger: true }) : Promise.resolve(true);
+      var fields = lane !== 'all' && lane !== laneOf(lanes, card) ? laneFields(lanes, lane) : null;
       ask.then(function (yes) {
         if (!yes) { draw(); return; }
-        UI.api('move_card', id, to, b ? b.getAttribute('data-id') : null).then(function (r) {
-          if (from !== to) UI.toast(card.key + ' → ' + AA.STATUS[to] + (to === 'done' && from === 'review' ? ' (approved)' : ''), 'ok');
-          return load();
-        });
+        UI.api('move_card', id, to, b ? b.getAttribute('data-id') : null).then(function () {
+          if (from.id !== to) UI.toast(card.key + ' → ' + target.name + (target.stage === 'done' && from.stage === 'review' ? ' (approved)' : ''), 'ok');
+          return fields ? UI.api('update_card', id, fields).then(function () { UI.toast(card.key + ' moved to another lane', 'ok'); }) : null;
+        }).then(load, load);
       });
     });
     return load();
@@ -1849,18 +2081,25 @@
               '<a class="ui-btn sm" href="#agents" data-go="agents">Manage</a></div>';
           }).join(''), { extra: (c.members.length + c.agents.length) + ' total' }) +
           '</div><div class="ui-stack">' +
-          AA.win('Flow rules', '<form data-flow class="ui-stack"><div class="ui-field"><span>WIP limits <em>(cards allowed per column)</em></span><div class="cr-wip">' + ['ready', 'doing', 'review'].map(function (k) {
+          AA.win('Flow rules', '<form data-flow class="ui-stack"><div class="ui-field"><span>WIP limits <em>(cards allowed per stage; agents respect these)</em></span><div class="cr-wip">' + ['ready', 'doing', 'review'].map(function (k) {
               return '<label class="ui-field"><span class="small">' + AA.STATUS[k] + '</span><input type="number" min="1" max="50" name="' + k + '" value="' + c.wip[k] + '"></label>';
             }).join('') + '</div></div>' +
             '<label class="ui-field"><span>Sprint length</span><select name="sprint_days">' + [[7, '1 week'], [14, '2 weeks'], [21, '3 weeks'], [28, '4 weeks']].map(function (o) {
               return '<option value="' + o[0] + '"' + (o[0] === c.sprint_days ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></label>' +
             '<label class="ui-field"><span>Definition of Done <em>(one rule per line; every agent brief includes it)</em></span><textarea name="dod" rows="5" maxlength="1600">' + esc(c.dod.join('\n')) + '</textarea></label>' +
             '<div class="ui-row end"><button class="ui-btn primary sm" type="submit">Save flow rules</button></div></form>', { cls: 'cyan' }) +
+          AA.win('Board columns', '<div data-cols></div>', { cls: 'lime', extra: c.columns.length + ' columns' }) +
+          AA.win('Alerts', '<div data-alerts><div class="ui-skel" style="height:140px"></div></div>', { cls: 'warn' }) +
+          AA.win('Requests, import, export', '<p class="small" style="margin-top:0">Give people outside the crew a link to ask for things, with an answer promise. ' +
+            'Bring your Jira or Trello history in, and take everything out whenever you like.</p><div class="ui-row"><a class="ui-btn sm" href="#requests" data-go="requests">' + UI.icon('megaphone') + 'Request desk</a>' +
+            '<a class="ui-btn sm" href="#import" data-go="import">' + UI.icon('upload') + 'Import and export</a></div>') +
           AA.win('Leave or delete', c.demo ? '<p class="small muted" style="margin:0">Demo crews are shared sandboxes. An admin can reset them from Admin → Demo data.</p>'
             : (c.role === 'owner' ? '<p class="small" style="margin-top:0">Deleting removes every card, sprint, epic, agent and log of this crew. Type <b>' + esc(c.key) + '</b> to confirm.</p>' +
               '<form data-delete class="ui-row"><input type="text" name="confirm" maxlength="5" placeholder="' + esc(c.key) + '" style="max-width:140px"><button class="ui-btn danger solid sm" type="submit">' + UI.icon('trash') + 'Delete crew</button></form>'
               : '<button class="ui-btn danger" data-leave>' + UI.icon('logout') + 'Leave this crew</button>'), { cls: 'warn' }) +
           '</div></div></div>';
+        columnsEditor(view.querySelector('[data-cols]'), c);
+        alertsPanel(view.querySelector('[data-alerts]'), c);
         view.addEventListener('submit', function (e) {
           e.preventDefault();
           var f = e.target, v = UI.formData(f), btn = f.querySelector('[type=submit]');
@@ -1884,6 +2123,80 @@
         });
       });
     });
+  }
+
+  /* Board columns: a stage can have several columns; the server keeps stage order and at least one per stage. */
+  function columnsEditor(el, c) {
+    var cols = c.columns.map(function (x) { return Object.assign({}, x); }), STG = ['ready', 'doing', 'review', 'done'];
+    function sortCols() { cols = STG.reduce(function (a, s) { return a.concat(cols.filter(function (x) { return x.stage === s; })); }, []); }
+    function draw() {
+      sortCols();
+      el.innerHTML = '<p class="small muted" style="margin-top:0">Split a stage into steps, like Doing → Build and Test. Agents, level checks and reports keep working on the stage. ' +
+        'A column\'s WIP limit counts only that column; the Flow rules limit counts the whole stage.</p>' + cols.map(function (x, i) {
+          var sub = cols.filter(function (y) { return y.stage === x.stage; }).length > 1;
+          return '<div class="cr-colrow' + (sub ? ' sub' : '') + '" data-i="' + i + '"><input type="text" data-cf="name" value="' + esc(x.name) + '" maxlength="20" aria-label="Column name">' +
+            '<select data-cf="stage" aria-label="Stage">' + STG.map(function (s) { return '<option value="' + s + '"' + (x.stage === s ? ' selected' : '') + '>' + AA.STATUS[s] + ' stage</option>'; }).join('') + '</select>' +
+            '<input type="number" data-cf="wip" min="1" max="50" value="' + (x.wip || '') + '" placeholder="WIP" aria-label="WIP limit for this column">' +
+            '<button type="button" class="ui-btn sm ghost icon" data-cup aria-label="Move up"' + (i > 0 && cols[i - 1].stage === x.stage ? '' : ' disabled') + '>' + UI.icon('up') + '</button>' +
+            '<button type="button" class="ui-btn sm ghost icon" data-cdel aria-label="Remove column"' + (sub ? '' : ' disabled') + '>' + UI.icon('x') + '</button></div>';
+        }).join('') + '<div class="ui-row" style="margin-top:10px"><button type="button" class="ui-btn sm" data-cadd>' + UI.icon('plus') + 'Add a column</button>' +
+        '<span class="ui-spacer"></span><button type="button" class="ui-btn sm primary" data-csave>Save columns</button></div>';
+    }
+    el.addEventListener('change', function (e) {
+      var row = e.target.closest('[data-i]'), f = e.target.getAttribute('data-cf');
+      if (!row || !f) return;
+      var x = cols[+row.getAttribute('data-i')];
+      x[f] = f === 'wip' ? (e.target.value ? +e.target.value : null) : e.target.value;
+      if (f === 'stage') draw();
+    });
+    el.addEventListener('click', function (e) {
+      var row = e.target.closest('[data-i]'), i = row ? +row.getAttribute('data-i') : -1, t;
+      if (e.target.closest('[data-cadd]')) { cols.push({ id: '', name: 'Test', stage: 'doing', wip: null }); draw(); }
+      else if (e.target.closest('[data-cup]') && i > 0) { t = cols[i - 1]; cols[i - 1] = cols[i]; cols[i] = t; draw(); }
+      else if (e.target.closest('[data-cdel]') && i >= 0) { cols.splice(i, 1); draw(); }
+      else if ((t = e.target.closest('[data-csave]'))) UI.busy(t, UI.api('save_columns', c.id, cols)).then(function (r) { cols = r.columns; draw(); UI.toast('Columns saved. The board follows.', 'ok'); });
+    });
+    draw();
+  }
+
+  /* Alerts: owner sets the webhook and what to send; every member can switch on an email digest for themselves. */
+  function alertsPanel(el, c) {
+    var KIND = { test: 'test' };
+    function draw(a) {
+      var s = a.settings;
+      a.kinds.forEach(function (k) { KIND[k.id] = k.label; });
+      el.innerHTML = (a.can_edit && !a.demo ? '<form data-alform class="ui-stack"><label class="ui-field"><span>Webhook <em>(Slack, Teams, Mattermost, Discord or your own server; https only)</em></span>' +
+          '<input type="url" name="webhook" maxlength="500" value="' + esc(s.webhook) + '" placeholder="https://hooks.slack.com/services/..."></label>' +
+          '<div class="cr-wip" style="grid-template-columns:repeat(2,minmax(0,1fr))"><label class="ui-field"><span class="small">Format</span><select name="format">' + a.formats.map(function (f) {
+            return '<option value="' + f.id + '"' + (f.id === s.format ? ' selected' : '') + '>' + esc(f.label) + '</option>'; }).join('') + '</select></label>' +
+          '<label class="ui-field"><span class="small">Review waits over (hours)</span><input type="number" name="review_hours" min="1" max="168" value="' + s.review_hours + '"></label></div>' +
+          '<div class="ui-field"><span>Send an alert when</span><div class="cr-kinds">' + a.kinds.map(function (k) {
+            return '<label class="ui-check"><input type="checkbox" name="k_' + k.id + '"' + (s.kinds[k.id] ? ' checked' : '') + '> ' + esc(k.label) + '</label>'; }).join('') + '</div></div>' +
+          '<div class="ui-row end"><button type="button" class="ui-btn sm" data-altest>Send a test</button><button class="ui-btn sm primary" type="submit">Save alerts</button></div></form>'
+        : '<p class="small muted" style="margin-top:0">' + (a.demo ? 'Demo crews keep an alert history but never send anything.' : 'The owner connects a webhook' + (s.webhook ? ' (one is connected).' : ' (none yet).')) + '</p>') +
+        (a.member && !a.demo ? '<label class="ui-check" style="margin-top:12px"><input type="checkbox" data-notify' + (a.notify ? ' checked' : '') + '> Email me when something needs a human (one digest, never a flood)</label>' : '') +
+        '<h3 style="margin:16px 0 4px;font-size:.8rem">Recent alerts</h3>' + (a.history.length ? a.history.slice(0, 8).map(function (h) {
+          var sent = h.sent || {}, st = sent.skipped ? 'not sent: ' + sent.skipped : [sent.webhook ? 'webhook ' + sent.webhook : '', sent.email ? sent.email + ' email' + (sent.email === 1 ? '' : 's') : ''].filter(Boolean).join(' · ') || 'recorded';
+          return '<div class="cr-al"><span class="when">' + esc(UI.ago(h.created)) + '</span><span>' + esc(h.text) + '</span><span class="st">' + esc(KIND[h.kind] || h.kind) + ' · ' + esc(st) + '</span></div>';
+        }).join('') : '<p class="small muted">Nothing yet. Quiet is good.</p>');
+    }
+    function load() { return UI.api('get_alerts', c.id).then(draw); }
+    el.addEventListener('submit', function (e) {
+      if (!e.target.matches('[data-alform]')) return;
+      e.preventDefault(); e.stopPropagation();
+      var f = e.target, v = UI.formData(f), kinds = {};
+      f.querySelectorAll('input[name^=k_]').forEach(function (x) { kinds[x.name.slice(2)] = x.checked; });
+      UI.busy(f.querySelector('[type=submit]'), UI.api('save_alerts', c.id, { webhook: v.webhook, format: v.format, review_hours: +v.review_hours, kinds: kinds }))
+        .then(function () { UI.toast('Alert settings saved', 'ok'); load(); });
+    });
+    el.addEventListener('click', function (e) {
+      var t = e.target.closest('[data-altest]');
+      if (t) UI.busy(t, UI.api('test_alerts', c.id)).then(function () { UI.toast('Test sent. Check your channel.', 'ok'); load(); });
+    });
+    el.addEventListener('change', function (e) {
+      if (e.target.matches('[data-notify]')) UI.api('set_notify', c.id, e.target.checked).then(function (r) { UI.toast(r.notify ? 'You will get alert emails for ' + c.key : 'Alert emails off', 'ok'); });
+    });
+    load();
   }
 
   UI.page('crew', { title: 'Crew', auth: 'user' }, function (view, ctx) {
@@ -1949,6 +2262,12 @@
             }).join('') : '<p class="muted small" style="margin:0"><span class="aa-led on"></span> No alerts. Smooth flow.</p>', { cls: 'cyan', extra: d.alerts.length }) +
           '</div><div class="dk-col">' +
             AA.win('Maturity', lvl, { cls: 'lime' }) +
+            (d.requests ? AA.win('Requests', (d.requests.top.length ? d.requests.top.map(function (r) {
+              return '<a class="dk-req" href="#requests" data-go="requests"><b>' + r.votes + '</b><span>' + esc(r.title) + '</span><em class="' + (r.overdue ? 'late' : '') + '">' +
+                (r.overdue ? 'overdue' : r.due_in + 'd left') + '</em></a>';
+            }).join('') : '<p class="muted small" style="margin:0">No open requests. Share your ask link so people outside the crew can ask.</p>') +
+              '<a class="ui-btn sm" style="margin-top:10px" href="#requests" data-go="requests">' + UI.icon('megaphone') + 'Request desk</a>',
+              { cls: d.requests.late ? 'warn' : '', extra: d.requests.open + ' open' + (d.requests.late ? ' · ' + d.requests.late + ' late' : '') }) : '') +
             (d.sprint ? AA.win(esc(d.sprint.name), '<div class="dk-sprint"><div class="goal">' + esc(d.sprint.goal || 'No goal set') + '</div>' +
               '<div class="pts">' + d.sprint.done_points + ' / ' + d.sprint.points + ' pts done · ends ' + esc(AA.shortDate(d.sprint.end)) + '</div><div data-burn style="margin-top:8px"></div></div>', { extra: 'burndown' }) : '') +
             AA.win('Agents', d.agents.length ? d.agents.map(agentRow).join('') + '<a class="ui-btn sm" style="margin-top:10px" href="#agents" data-go="agents">' + UI.icon('terminal') + 'Agent console</a>'
@@ -1970,10 +2289,284 @@
   });
 })();
 
+/* ===== import.html ===== */
+(function () {
+  var esc = UI.esc;
+  var SOURCES = [['jira', 'Jira CSV'], ['trello', 'Trello JSON'], ['csv', 'Any CSV'], ['autoagile', 'AutoAgile JSON']];
+  var FIELDS = [['title', 'Title *'], ['body', 'Description'], ['status', 'Status'], ['type', 'Type'], ['priority', 'Priority'], ['points', 'Points'],
+    ['labels', 'Labels'], ['assignee', 'Assignee'], ['epic', 'Epic'], ['created', 'Created'], ['started', 'Started'], ['done_at', 'Finished'], ['key', 'Key / ID'], ['url', 'Link']];
+  var GUESS = {
+    title: /^(summary|title|name|card name|task|task name|subject)$/i, body: /^(description|desc|body|details|notes|card description)$/i,
+    status: /^(status|state|list|list name|column|stage|section)$/i, type: /^(type|issue type|kind|category|work item type)$/i, priority: /^priority$/i,
+    points: /story ?points?|story point estimate|^points$|^estimate$|^effort$/i, labels: /^(labels?|tags?)$/i, assignee: /^(assignee|owner|assigned to|members|responsible)$/i,
+    epic: /^(parent summary|epic|epic name|epic link summary|custom field \(epic name\))$/i, created: /^(created|created at|date created|creation date)$/i,
+    started: /^(started|start date|started at|custom field \(start date\))$/i, done_at: /^(resolved|completed|completed at|done|date completed|closed|resolution date)$/i,
+    key: /^(issue key|key|card id|id|task id)$/i, url: /^(url|link|card url|short url)$/i
+  };
+  var MON = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+
+  function when(s) {
+    s = String(s || '').trim();
+    if (!s) return null;
+    var m = s.match(/^(\d{1,2})\/([A-Za-z]{3})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM)?)?/i);  // Jira: 12/Mar/24 3:14 PM
+    if (m && MON[m[2].toLowerCase()] != null) {
+      var y = +m[3] < 100 ? 2000 + (+m[3]) : +m[3], h = +(m[4] || 0);
+      if (m[6]) { h = h % 12 + (m[6].toUpperCase() === 'PM' ? 12 : 0); }
+      return new Date(Date.UTC(y, MON[m[2].toLowerCase()], +m[1], h, +(m[5] || 0))).toISOString();
+    }
+    var t = Date.parse(s.replace(' ', 'T'));
+    if (isNaN(t)) t = Date.parse(s);
+    return isNaN(t) ? null : new Date(t).toISOString();
+  }
+  function stageGuess(s) {
+    s = String(s || '').toLowerCase();
+    if (/done|closed|resolved|complete|shipped|released|fixed|finished|live/.test(s)) return 'done';
+    if (/review|qa|test|verif|approv|accept/.test(s)) return 'review';
+    if (/progress|doing|develop|\bdev\b|started|building|wip|active|working/.test(s)) return 'doing';
+    if (/ready|selected|next|to ?do|planned|committed|up next|sprint/.test(s)) return 'ready';
+    return 'backlog';
+  }
+  function prioGuess(s) {
+    s = String(s || '').toLowerCase();
+    if (/highest|blocker|urgent|p0/.test(s)) return 0;
+    if (/high|critical|p1/.test(s)) return 1;
+    if (/low|minor|trivial|p3|p4/.test(s)) return 3;
+    return 2;
+  }
+
+  /* ---------------------------------------------------------------- readers: each returns {kind, headers?, rows?, items?, note} */
+  function readCSV(text, kind) {
+    var all = AA.parseCSV(text);
+    if (all.length < 2) throw new Error('That file has no rows under the header line.');
+    var headers = all[0].map(function (h) { return h.trim(); });
+    return { kind: kind, headers: headers, rows: all.slice(1) };
+  }
+  function readTrello(text) {
+    var b = JSON.parse(text);
+    if (!b || !Array.isArray(b.cards) || !Array.isArray(b.lists)) throw new Error('This is not a Trello board export (Menu → Print, export and share → Export as JSON).');
+    var lists = {}, members = {}, comments = {};
+    b.lists.forEach(function (l) { lists[l.id] = l.name; });
+    (b.members || []).forEach(function (m) { members[m.id] = m.fullName || m.username; });
+    (b.actions || []).forEach(function (a) {
+      if (a.type === 'commentCard' && a.data && a.data.card) (comments[a.data.card.id] = comments[a.data.card.id] || []).push({ who: a.memberCreator && a.memberCreator.fullName, text: a.data.text, created: a.date });
+    });
+    var items = b.cards.filter(function (c) { return !c.closed || stageGuess(lists[c.idList]) === 'done'; }).map(function (c) {
+      var made = new Date(parseInt(String(c.id).slice(0, 8), 16) * 1000).toISOString(), list = lists[c.idList] || 'Unknown list';
+      return { title: c.name, body: c.desc || '', src: list, type: (c.labels || []).some(function (l) { return /bug/i.test(l.name || ''); }) ? 'bug' : 'story',
+        labels: (c.labels || []).map(function (l) { return l.name || l.color; }).filter(Boolean), assignee: (c.idMembers || []).map(function (id) { return members[id]; })[0] || '',
+        created: made, done_at: stageGuess(list) === 'done' ? (c.dateLastActivity || null) : null, source: 'trello:' + c.id, url: c.shortUrl || c.url || '',
+        comments: (comments[c.id] || []).reverse(), priority: 2 };
+    });
+    return { kind: 'trello', items: items, note: (b.name ? 'Board "' + b.name + '": ' : '') + items.length + ' cards (archived ones skipped unless in a done list).' };
+  }
+  function readAutoAgile(text) {
+    var x = JSON.parse(text);
+    if (!x || x.format !== 'autoagile-export') throw new Error('This is not an AutoAgile export.');
+    var items = x.cards.map(function (c) {
+      return { title: c.title, body: c.body, src: c.column || c.status, stage: c.status, type: c.type, priority: c.priority, points: c.points, gates: c.gates, acceptance: c.acceptance,
+        labels: c.labels, epic: c.epic, assignee: c.assignee_kind === 'user' ? c.assignee : (c.assignee || ''), created: c.created, started: c.started, review_at: c.review_at,
+        done_at: c.done_at, source: 'autoagile:' + c.key, comments: (c.comments || []).filter(function (m) { return m.kind === 'comment'; }) };
+    });
+    return { kind: 'autoagile', items: items, note: 'Export of ' + x.crew.name + ' (' + x.crew.key + '), ' + items.length + ' cards, made ' + UI.fmtDate(x.exported) + '.' };
+  }
+
+  /* CSV rows -> items with the person's field mapping (Jira extras: several Labels / Comment columns, epics by key) */
+  function csvItems(p, map, linkBase) {
+    var H = p.headers.map(function (h) { return h.toLowerCase(); });
+    var idx = function (name) { var out = []; H.forEach(function (h, i) { if (name && h === name.toLowerCase()) out.push(i); }); return out; };
+    var one = function (row, name) { var v = ''; idx(name).some(function (i) { if ((row[i] || '').trim()) { v = row[i].trim(); return true; } return false; }); return v; };
+    var many = function (row, name) { var out = []; idx(name).forEach(function (i) { String(row[i] || '').split(p.kind === 'jira' ? /\s+/ : /[,;]/).forEach(function (x) { x = x.replace(/\s*\([a-z_]+\)$/, '').trim(); if (x) out.push(x); }); }); return out; };
+    var epicByKey = {}, typeI = idx(map.type || 'Issue Type')[0], keyI = idx(map.key || 'Issue key')[0];
+    if (p.kind === 'jira' && typeI != null) p.rows.forEach(function (r) { if (/^epic$/i.test(r[typeI] || '')) epicByKey[(r[keyI] || '').trim()] = one(r, map.title || 'Summary'); });
+    return p.rows.filter(function (r) { return !(p.kind === 'jira' && typeI != null && /^epic$/i.test(r[typeI] || '')); }).map(function (r) {
+      var key = one(r, map.key), epic = one(r, map.epic);
+      if (!epic && p.kind === 'jira') { var link = one(r, 'Custom field (Epic Link)') || one(r, 'Parent'); epic = epicByKey[link] || ''; }
+      var comments = p.kind === 'jira' ? idx('Comment').map(function (i) { return r[i]; }).filter(Boolean).map(function (c) {
+        var parts = c.split(';'); return parts.length >= 3 ? { created: when(parts[0]), who: parts[1].length > 20 ? 'Jira user' : parts[1], text: parts.slice(2).join(';') } : { text: c };
+      }) : [];
+      return { title: one(r, map.title), body: one(r, map.body), src: one(r, map.status) || '(no status)', type: one(r, map.type), priority: map.priority ? prioGuess(one(r, map.priority)) : 2,
+        points: one(r, map.points), labels: many(r, map.labels), assignee: one(r, map.assignee), epic: epic, created: when(one(r, map.created)), started: when(one(r, map.started)),
+        done_at: when(one(r, map.done_at)), updated: when(one(r, 'Updated')), source: key ? (p.kind === 'jira' ? 'jira:' : 'csv:') + key : '',
+        url: one(r, map.url) || (key && linkBase ? linkBase.replace(/\/?$/, '/') + key : ''), comments: comments };
+    });
+  }
+
+  UI.page('import', { title: 'Import and export', auth: 'user' }, function (view, ctx) {
+    var S = { src: UI.store.get('im.src', 'jira'), parsed: null, map: {}, smap: {}, history: true, epics: true, link: '', busy: false, result: null };
+    var crew = null, cols = [];
+    view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:420px"></div></div>';
+
+    function items() {
+      if (!S.parsed) return [];
+      var list = S.parsed.items || csvItems(S.parsed, S.map, S.link);
+      return list.map(function (it) { return Object.assign({}, it, { status: S.smap[it.src] || 'backlog' }); });
+    }
+    function sources() {
+      var c = {};
+      (S.parsed.items || csvItems(S.parsed, S.map, S.link)).forEach(function (it) { c[it.src] = (c[it.src] || 0) + 1; });
+      return Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).map(function (k) { return [k, c[k]]; });
+    }
+    function guessStatuses() {
+      var known = {};
+      (S.parsed.items || []).forEach(function (it) { if (it.stage) known[it.src] = it.stage; });
+      sources().forEach(function (s) {
+        if (S.smap[s[0]]) return;
+        var named = cols.filter(function (c) { return c.name.toLowerCase() === String(s[0]).toLowerCase(); })[0];
+        var g = known[s[0]] || stageGuess(s[0]), byStage = cols.filter(function (c) { return c.stage === g; })[0];
+        S.smap[s[0]] = named ? named.id : g === 'backlog' ? 'backlog' : (byStage ? byStage.id : g);
+      });
+    }
+    function targetOptions(cur) {
+      return '<option value="backlog"' + (cur === 'backlog' ? ' selected' : '') + '>Backlog</option>' + cols.map(function (c) {
+        return '<option value="' + esc(c.id) + '"' + (cur === c.id ? ' selected' : '') + '>' + esc(c.name) + (c.name.toLowerCase() !== c.stage ? ' (' + esc(AA.STATUS[c.stage]) + ')' : '') + '</option>';
+      }).join('');
+    }
+    function exportWin() {
+      return AA.win('Take everything with you', '<p class="small" style="margin-top:0">No lock-in. Any member can download the whole crew at any time: cards with their history and comments, epics, sprints and retros, requests, settings. Import the JSON into another AutoAgile crew, or open the CSV in a spreadsheet or another tracker.</p>' +
+        '<div class="ui-stack"><button class="ui-btn primary" data-exp="json">' + UI.icon('download') + 'Everything (JSON)</button><button class="ui-btn" data-exp="csv">' + UI.icon('download') + 'Cards as CSV</button><p class="small muted" style="margin:0">The CSV uses Jira-style column names, so other trackers read it too.</p></div>', { cls: 'cyan' });
+    }
+    function draw() {
+      var p = S.parsed, its = p ? items() : [];
+      var head = '<div class="aa-head"><div><div class="eyebrow">Import // ' + esc(crew.key) + '</div><h1>Import and export</h1><div class="sub">Bring your history. Leave whenever you like.</div></div>' +
+        '<div class="ui-row"><a class="ui-btn" href="#backlog" data-go="backlog">' + UI.icon('list') + 'Backlog</a></div></div>';
+      var demo = crew.demo ? '<div class="aa-demo-note"><b>DEMO CREW</b> // imports go into your own crews. <a href="#crew/new" data-go="crew/new">Start one</a>, then come back. You can still try reading a file here and export the demo.</div>' : '';
+      var step1 = AA.win('1 · Pick a file', '<div class="ui-seg im-src" role="group" aria-label="Source" style="margin-bottom:12px">' + SOURCES.map(function (s) {
+          return '<button type="button" data-src="' + s[0] + '" class="' + (S.src === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
+        '<p class="small muted" style="margin-top:0">' + ({ jira: 'In Jira: Filters → your issues → Export → <b>Export CSV (all fields)</b>. Dates, labels, comments, epics and story points come along.',
+          trello: 'In Trello: board Menu → Print, export and share → <b>Export as JSON</b>. Lists become columns; comments and labels come along.',
+          csv: 'Any spreadsheet saved as CSV: Asana, monday.com, Linear, GitHub Projects, Podio, Notion. You choose which column is what.',
+          autoagile: 'A file from Export below, from this or another AutoAgile crew.' })[S.src] + '</p>' +
+        '<label class="im-drop" data-dropzone><input type="file" data-file accept=".csv,.json,.txt,text/csv,application/json" style="max-width:100%"><br><span class="small muted">or drop the file here</span></label>' +
+        '<details style="margin-top:10px"><summary class="small">Paste instead</summary><textarea data-paste rows="5" placeholder="Paste CSV or JSON here" style="margin-top:8px"></textarea><button class="ui-btn sm" data-readpaste style="margin-top:8px">Read it</button></details>', { cls: 'lime' });
+      var body = '';
+      if (p) {
+        var srcs = sources();
+        body += AA.win('2 · Check what is what', (p.note ? '<p class="small" style="margin-top:0">' + esc(p.note) + '</p>' : '<p class="small" style="margin-top:0">' + its.length + ' cards found' + (p.kind === 'jira' ? ' (epics become AutoAgile epics)' : '') + '.</p>') +
+          (p.headers ? '<div class="im-map">' + FIELDS.map(function (f) {
+            return '<label for="im-' + f[0] + '">' + f[1] + '</label><select id="im-' + f[0] + '" data-map="' + f[0] + '"><option value="">(none)</option>' + p.headers.filter(function (h, i) { return h && p.headers.indexOf(h) === i; }).map(function (h) {
+              return '<option' + (S.map[f[0]] === h ? ' selected' : '') + '>' + esc(h) + '</option>'; }).join('') + '</select>';
+          }).join('') + '</div>' : '') +
+          '<h3 style="margin:16px 0 8px">Statuses → columns</h3><div class="im-st">' + srcs.map(function (s) {
+            return '<span class="from">' + esc(s[0]) + '</span><span class="n">' + s[1] + '</span><select data-smap="' + esc(s[0]) + '" aria-label="Column for ' + esc(s[0]) + '">' + targetOptions(S.smap[s[0]]) + '</select>';
+          }).join('') + '</div>' +
+          '<div class="ui-stack" style="margin-top:14px"><label class="ui-check"><input type="checkbox" data-opt="history"' + (S.history ? ' checked' : '') + '> Keep dates (created, finished), so throughput, cycle times and level checks count your past</label>' +
+          '<label class="ui-check"><input type="checkbox" data-opt="epics"' + (S.epics ? ' checked' : '') + '> Create epics that don\'t exist yet</label>' +
+          (p.kind === 'jira' ? '<label class="ui-field"><span>Link back to Jira <em>(optional: https://yourcompany.atlassian.net/browse/)</em></span><input type="url" data-link value="' + esc(S.link) + '" placeholder="https://yourcompany.atlassian.net/browse/"></label>' : '') + '</div>',
+          { extra: its.length + ' cards' });
+        var prev = its.slice(0, 6);
+        body += AA.win('3 · Preview and import', '<div class="im-prev"><table class="aa-table"><thead><tr><th>Title</th><th>Column</th><th>Type</th><th>Pts</th><th>Who</th><th>Epic</th><th>Created</th></tr></thead><tbody>' +
+          prev.map(function (it) {
+            var col = it.status === 'backlog' ? 'Backlog' : (cols.filter(function (c) { return c.id === it.status; })[0] || {}).name;
+            return '<tr><td>' + esc((it.title || '').slice(0, 60)) + '</td><td>' + esc(col || it.status) + '</td><td>' + esc(it.type || '') + '</td><td>' + esc(it.points == null ? '' : it.points) + '</td><td>' +
+              esc(it.assignee || '') + '</td><td>' + esc(it.epic || '') + '</td><td>' + esc(it.created ? it.created.slice(0, 10) : '') + '</td></tr>';
+          }).join('') + '</tbody></table></div>' +
+          (S.map.title || p.items ? '' : '<p style="color:var(--c-bad)">Pick the column that holds the title.</p>') +
+          '<div class="ui-row" style="margin-top:12px"><button class="ui-btn primary lg" data-go-import' + (crew.demo || S.busy || !(S.map.title || p.items) ? ' disabled' : '') + '>' + UI.icon('upload') + 'Import ' + its.length + ' cards into ' + esc(crew.key) + '</button></div>' +
+          '<div class="im-bar" data-bar style="margin-top:12px;display:' + (S.busy ? 'block' : 'none') + '"><i></i></div>' +
+          (S.result ? '<div class="aa-lcds" style="margin-top:14px">' + AA.lcd(S.result.created, 'cards imported') + AA.lcd(S.result.duplicates, 'already there, skipped', 'cyan') +
+            AA.lcd(S.result.epics_created, 'new epics', 'pink') + AA.lcd(S.result.comments, 'comments', 'amber') + '</div>' +
+            (S.result.unmatched.length ? '<p class="small">Not in this crew, so left unassigned (their name is in the card): ' + esc(S.result.unmatched.join(', ')) + '. Invite them, then assign.</p>' : '') +
+            (S.result.invalid ? '<p class="small muted">' + S.result.invalid + ' rows had no title and were skipped.</p>' : '') +
+            '<div class="ui-row"><a class="ui-btn" href="#backlog" data-go="backlog">Open the backlog</a><a class="ui-btn" href="#reports/flow" data-go="reports/flow">See the history in Reports</a><a class="ui-btn" href="#plan" data-go="plan">Level checks</a></div>' : ''),
+          { cls: 'lime' });
+      }
+      view.innerHTML = '<div class="ui-wrap">' + head + demo + '<div class="im-grid"><div class="ui-stack">' + step1 + body + '</div><div class="ui-stack">' + exportWin() +
+        AA.win('What comes along', '<dl class="aa-kv"><dt>Kept</dt><dd>Titles, descriptions, types, priorities, points, labels, epics, comments, links back, and the dates that make your history count.</dd>' +
+          '<dt>People</dt><dd>Matched to crew members by email or name. Anyone else stays in the card text.</dd><dt>Twice?</dt><dd>Safe. Cards already imported (same key) are skipped.</dd>' +
+          '<dt>Points</dt><dd>Snapped to the nearest rung (1, 2, 3, 5, 8, 13, 21). Run the gates later to make them comparable.</dd></dl>') + '</div></div></div>';
+    }
+    function setParsed(p) {
+      S.parsed = p; S.map = {}; S.smap = {}; S.result = null;
+      if (p.headers) {
+        FIELDS.forEach(function (f) { var h = p.headers.filter(function (x) { return GUESS[f[0]].test(x.trim()); })[0]; if (h) S.map[f[0]] = h; });
+        if (p.kind === 'jira') { if (p.headers.indexOf('Summary') >= 0) S.map.title = 'Summary'; ['Custom field (Story Points)', 'Custom field (Story point estimate)'].forEach(function (h) { if (p.headers.indexOf(h) >= 0) S.map.points = h; }); }
+      }
+      guessStatuses(); draw();
+    }
+    function readText(text, name) {
+      try {
+        var t = String(text || '').trim(), json = t[0] === '{' || t[0] === '[';
+        var kind = json ? (t.indexOf('"autoagile-export"') >= 0 ? 'autoagile' : 'trello') : (S.src === 'jira' || /issue key|issue type/i.test(t.split('\n')[0]) ? 'jira' : 'csv');
+        if (kind !== S.src) { S.src = kind; UI.store.set('im.src', kind); }
+        setParsed(kind === 'autoagile' ? readAutoAgile(t) : kind === 'trello' ? readTrello(t) : readCSV(t, kind));
+        UI.toast('Read ' + (name || 'the text') + ': ' + items().length + ' cards', 'ok');
+      } catch (e) { UI.toast(e.message || 'Could not read that file.', 'error'); }
+    }
+    function readFile(f) {
+      if (!f) return;
+      if (f.size > 15 * 1024 * 1024) { UI.toast('That file is over 15 MB. Export fewer issues at a time.', 'error'); return; }
+      var r = new FileReader();
+      r.onload = function () { readText(r.result, f.name); };
+      r.readAsText(f);
+    }
+    function runImport() {
+      var all = items().map(function (it) {
+        var o = Object.assign({}, it); delete o.src; delete o.stage;
+        return o;
+      }), done = 0, total = { created: 0, duplicates: 0, invalid: 0, epics_created: 0, comments: 0, unmatched: [] };
+      S.busy = true; S.result = null; draw();
+      var bar = function () { var b = view.querySelector('[data-bar] i'); if (b) b.style.width = Math.round(100 * done / all.length) + '%'; };
+      var opts = { history: S.history, epics: S.epics, from: { jira: 'Jira', trello: 'Trello', csv: 'CSV', autoagile: 'AutoAgile' }[S.parsed.kind] };
+      var chain = Promise.resolve();
+      for (var i = 0; i < all.length; i += 200) {
+        (function (batch) {
+          chain = chain.then(function () {
+            return UI.api('import_cards', crew.id, batch, opts).then(function (r) {
+              ['created', 'duplicates', 'invalid', 'epics_created', 'comments'].forEach(function (k) { total[k] += r[k]; });
+              r.unmatched.forEach(function (u) { if (total.unmatched.indexOf(u) < 0) total.unmatched.push(u); });
+              done += batch.length; bar();
+            });
+          });
+        })(all.slice(i, i + 200));
+      }
+      chain.then(function () {
+        S.busy = false; S.result = total; draw();
+        if (total.created) AA.rave('IMPORTED', total.created + ' cards into ' + crew.key);
+      }, function () { S.busy = false; draw(); });
+    }
+    function doExport(kind) {
+      return UI.api('export_crew', crew.id).then(function (r) {
+        var x = r.export, day = x.exported.slice(0, 10);
+        if (kind === 'json') { AA.download(crew.key + '-autoagile-' + day + '.json', JSON.stringify(x, null, 1), 'application/json'); return; }
+        var rows = [['Issue key', 'Summary', 'Description', 'Issue Type', 'Status', 'Column', 'Priority', 'Story Points', 'Labels', 'Assignee', 'Epic', 'Sprint', 'Created', 'Started', 'Resolved', 'Source']];
+        x.cards.forEach(function (c) {
+          rows.push([c.key, c.title, c.body, c.type, AA.STATUS[c.status], c.column, 'P' + c.priority, c.points == null ? '' : c.points, (c.labels || []).join(' '), c.assignee || '', c.epic || '',
+            c.sprint || '', c.created || '', c.started || '', c.done_at || '', c.source || '']);
+        });
+        AA.download(crew.key + '-cards-' + day + '.csv', AA.toCSV(rows), 'text/csv');
+      });
+    }
+
+    view.addEventListener('click', function (e) {
+      var t;
+      if ((t = e.target.closest('[data-src]'))) { S.src = t.getAttribute('data-src'); UI.store.set('im.src', S.src); S.parsed = null; S.result = null; draw(); }
+      else if (e.target.closest('[data-readpaste]')) readText(view.querySelector('[data-paste]').value, 'the pasted text');
+      else if (e.target.closest('[data-go-import]')) runImport();
+      else if ((t = e.target.closest('[data-exp]'))) UI.busy(t, doExport(t.getAttribute('data-exp')));
+    });
+    view.addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.matches('[data-file]')) readFile(t.files[0]);
+      else if (t.matches('[data-map]')) { S.map[t.getAttribute('data-map')] = t.value; if (t.getAttribute('data-map') === 'status') guessStatuses(); draw(); }
+      else if (t.matches('[data-smap]')) { S.smap[t.getAttribute('data-smap')] = t.value; draw(); }
+      else if (t.matches('[data-opt]')) { S[t.getAttribute('data-opt')] = t.checked; }
+      else if (t.matches('[data-link]')) { S.link = t.value.trim(); draw(); }
+    });
+    view.addEventListener('dragover', function (e) { var z = e.target.closest('[data-dropzone]'); if (z) { e.preventDefault(); z.classList.add('over'); } });
+    view.addEventListener('dragleave', function (e) { var z = e.target.closest('[data-dropzone]'); if (z) z.classList.remove('over'); });
+    view.addEventListener('drop', function (e) { var z = e.target.closest('[data-dropzone]'); if (z) { e.preventDefault(); z.classList.remove('over'); readFile(e.dataTransfer.files[0]); } });
+
+    return AA.withCrew(view, function (c) {
+      crew = c;
+      return UI.api('get_crew', c.id).then(function (r) { cols = r.crew.columns; draw(); });
+    });
+  });
+})();
+
 /* ===== insights.html ===== */
 (function () {
   var esc = UI.esc;
-  UI.page('insights', { title: 'Insights', nav: 'Insights', icon: 'chart', auth: 'user', order: 60 }, function (view, ctx) {
+  UI.page('insights', { title: 'Insights', auth: 'user' }, function (view, ctx) {
     view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:420px"></div></div>';
     return AA.withCrew(view, function (crew) {
       return UI.api('get_insights', crew.id).then(function (d) {
@@ -2022,8 +2615,8 @@
             points: d.cycle.map(function (c) { return { x: new Date(c.done).getTime(), y: c.days, s: c.agent ? 1 : 0, head: c.key + ' · ' + (c.points == null ? '?' : c.points) + ' pts', label: c.title }; }) });
           AA.chart.stack(q('cfd'), { title: 'Cumulative flow', x: d.cfd.map(function (p) { return AA.shortDate(p.date); }),
             series: [{ name: 'Done', color: 'var(--ch-1)', values: d.cfd.map(function (p) { return p.done; }) },
-                     { name: 'Doing', color: 'var(--ch-2)', values: d.cfd.map(function (p) { return p.doing; }) },
-                     { name: 'To do', color: 'var(--ch-3)', values: d.cfd.map(function (p) { return p.todo; }) }] });
+                     { name: 'Doing', color: 'var(--ch-3)', values: d.cfd.map(function (p) { return p.doing; }) },
+                     { name: 'To do', color: 'var(--ch-4)', values: d.cfd.map(function (p) { return p.todo; }) }] });
           if (q('vel')) AA.chart.grouped(q('vel'), { title: 'Velocity', data: d.velocity.map(function (v) { return { label: 'S' + v.number, head: v.name, values: [v.committed, v.done] }; }),
             series: [{ name: 'Committed', color: 'var(--ch-3)' }, { name: 'Done', color: 'var(--ch-1)' }] });
           AA.chart.bars(q('gate'), { title: 'Median days per points value', unit: 'days (median)', color: 'var(--ch-2)',
@@ -2051,13 +2644,19 @@
     features: [['gate', 'Complexity gates', 'Six questions (scope, clarity, novelty, dependencies, risk, testing) light a points ladder. Red answers raise the floor. 13 or more says split it; unknown clarity says spike first.'],
                ['bot', 'AI developers on the crew', 'Agents get a name, a token and their own WIP limit. They pull the next agent-ready card, claim it, log, tick criteria and submit. Only humans approve.'],
                ['copy', 'One-click agent briefs', 'Every card exports a markdown spec: goal, acceptance criteria, gates, your Definition of Done and the house rules. Paste it into any coding tool.'],
-               ['chart', 'Flow you can see', 'Throughput, cycle time, cumulative flow, velocity, gate accuracy, and whether agent work waits too long in review.'],
+               ['chart', 'Reports that forecast', 'Burn-up with a forecast cone, Monte Carlo "when will it be done?", cumulative flow, a cycle-time control chart, an epic map and the work mix. Every chart has a table and a CSV.'],
+               ['upload', 'Bring your history, leave any time', 'Import a Jira CSV, a Trello board or any spreadsheet with its dates, so your past counts from day one. Export everything as JSON or CSV whenever you like.'],
+               ['megaphone', 'Requests that get answers', 'Give customers and managers a link to ask and vote. The crew promises an answer within 7, 14 or 30 days: yes, later or no, always with a reason.'],
+               ['bell', 'Alerts without the noise', 'One webhook for Slack, Teams or Discord and an opt-in email digest when agent work waits in review, a card is blocked or a sprint runs over. Each thing is said once.'],
+               ['board', 'Your columns, your lanes', 'Split Doing into Build and Test, give each column its own WIP limit, and group the board by person, epic, priority or type. Ctrl K jumps anywhere.'],
                ['zap', 'Levels you earn', 'Each level lists the checks to pass. Level up with a little rave, force it if you must (it\'s recorded), step back any time.'],
                ['users', 'Crews, codes, sandbox', 'Invite people with a 6-character code. Two demo crews let you try everything before you start your own.']],
     faq: [['Why start in Kanban?', 'Sprint commitments and roadmaps need history: how much you finish, and how steadily. A young crew doesn\'t have it yet, so it starts by making work visible and limiting WIP. The data it produces unlocks the next level.'],
           ['What are complexity gates?', 'Instead of debating 3 versus 5 points, you answer six short questions about the card. The total picks a Fibonacci rung (1, 2, 3, 5, 8, 13, 21); any red answer sets a minimum. The same questions decide whether an AI agent can take the card alone.'],
           ['How do AI developers connect?', 'Add an agent on the Agents page and copy its token. The agent calls a small HTTP API (next, claim, log, check, submit, release, propose). A console in the app tries every call, and there is a CLAUDE.md snippet to paste into your repo.'],
           ['Can an agent finish work on its own?', 'No. Agents move cards to Review at most; a human approves to Done. Agents also respect their own WIP limit and the crew\'s Doing limit, so they can\'t flood the board.'],
+          ['Coming from Jira or Trello?', 'Export a CSV from Jira or a JSON from Trello and drop it on the Import page. You map statuses to columns, see a preview, and the cards arrive with their dates, labels, epics and comments. Importing twice skips what is already there.'],
+          ['What if we want to leave?', 'Any member can download the whole crew as JSON or CSV at any time, from Crew settings. No export fees, no support ticket.'],
           ['Is it free? Who sees my data?', 'It\'s free. Your crew\'s cards are visible to your crew members and to agents you give a token. Demo crews are a shared sandbox: don\'t put anything private there. The Privacy & Terms page has the details.']]
   };
   // A copy of server_code/Gates.py (visitors can't call the server). Keep in step.
@@ -2391,6 +2990,644 @@
         UI.setMe(r.me); ctx.me = r.me; UI.toast('Saved', 'ok');
         view.querySelector('.pf-head h1').textContent = r.me.name;
       });
+    });
+  });
+})();
+
+/* ===== reports.html ===== */
+(function () {
+  var esc = UI.esc;
+  var TABS = [['burnup', 'Burn-up'], ['forecast', 'Forecast'], ['flow', 'Flow'], ['cycle', 'Cycle time'], ['epics', 'Epic map'], ['mix', 'Work mix']];
+  var DAY = 864e5, WEEK = 7 * DAY;
+  var STAGES = [['done', 'Done', 'var(--ch-1)'], ['review', 'Review', 'var(--ch-2)'], ['doing', 'Doing', 'var(--ch-3)'], ['todo', 'To do', 'var(--ch-4)']];
+
+  /* ---------------------------------------------------------------- data helpers */
+  function prep(d) {
+    var ms = function (s) { return s ? Date.parse(s) : null; };
+    d.nowMs = Date.parse(d.now);
+    d.cards.forEach(function (c) { c.cM = ms(c.c); c.stM = ms(c.st); c.rvM = ms(c.rv); c.dM = c.s === 'done' ? ms(c.d) : null; });
+    d.firstMs = Math.min.apply(null, d.cards.map(function (c) { return c.cM; }).filter(Boolean).concat([d.nowMs - 12 * WEEK]));
+    return d;
+  }
+  function rangeStart(d, range) {
+    if (range === 'all') return d.firstMs;
+    return d.nowMs - (+range) * WEEK;
+  }
+  function days(from, to) {
+    var out = [], step = (to - from) > 400 * DAY ? WEEK : DAY;
+    for (var t = from; t < to; t += step) out.push(t);
+    out.push(to);
+    return out;
+  }
+  /* weekly throughput (cards and points) for the last n weeks, oldest first, skipping weeks before the first finish */
+  function weekly(cards, nowMs, n) {
+    var out = [];
+    for (var i = n - 1; i >= 0; i--) {
+      var hi = nowMs - i * WEEK, lo = hi - WEEK, k = 0, p = 0;
+      cards.forEach(function (c) { if (c.dM && c.dM > lo && c.dM <= hi) { k++; p += c.p || 0; } });
+      out.push({ end: hi, cards: k, points: p });
+    }
+    while (out.length > 3 && out[0].cards === 0) out.shift();
+    return out;
+  }
+  function rng(seed) {  // mulberry32: the same scope gives the same forecast every time you look
+    var a = 0; for (var i = 0; i < seed.length; i++) a = (a * 31 + seed.charCodeAt(i)) | 0;
+    return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+  function pct(sorted, p) { return sorted.length ? sorted[Math.min(sorted.length - 1, Math.max(0, Math.ceil(p * sorted.length) - 1))] : null; }
+  function fmt(ms) { return UI.fmtDate(new Date(ms).toISOString(), { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function fmtS(ms) { return UI.fmtDate(new Date(ms).toISOString(), { day: 'numeric', month: 'short' }); }
+
+  /* ---------------------------------------------------------------- chart scaffolding */
+  function svgFor(d3, el, h, m) {
+    el.innerHTML = '';
+    el.classList.add('rp-chart');
+    var w = Math.max(280, el.clientWidth || 640);
+    var svg = d3.select(el).append('svg').attr('viewBox', '0 0 ' + w + ' ' + h).attr('height', h).attr('role', 'img');
+    return { svg: svg, w: w, h: h, m: m, iw: w - m.l - m.r, ih: h - m.t - m.b, g: svg.append('g').attr('transform', 'translate(' + m.l + ',' + m.t + ')') };
+  }
+  function axes(d3, f, x, y, o) {
+    o = o || {};
+    f.g.append('g').attr('class', 'grid').call(d3.axisLeft(y).ticks(o.yTicks || 5).tickSize(-f.iw).tickFormat(''));
+    f.g.append('g').attr('transform', 'translate(0,' + f.ih + ')').attr('class', 'xaxis')
+      .call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(f.iw / 90))).tickFormat(o.xFmt || d3.utcFormat('%b %d')).tickSizeOuter(0));
+    f.g.append('g').call(d3.axisLeft(y).ticks(o.yTicks || 5).tickFormat(o.yFmt || d3.format('~s')).tickSizeOuter(0));
+  }
+  function legend(items) {
+    return items.length < 2 ? '' : '<div class="aa-legend">' + items.map(function (s) {
+      return '<span><i class="' + (s.kind || '') + '" style="background:' + s.color + '"></i>' + esc(s.name) + '</span>';
+    }).join('') + '</div>';
+  }
+  function crosshair(d3, f, x, pts, rowsFor) {
+    var line = f.g.append('line').attr('class', 'xh').attr('y1', 0).attr('y2', f.ih).style('display', 'none');
+    var bis = d3.bisector(function (p) { return p.t; }).center;
+    f.g.append('rect').attr('width', f.iw).attr('height', f.ih).style('fill', 'transparent').style('cursor', 'crosshair')
+      .on('pointermove', function (ev) {
+        var mx = d3.pointer(ev, this)[0], i = bis(pts, x.invert(mx)), p = pts[i];
+        if (!p) return;
+        line.attr('x1', x(p.t)).attr('x2', x(p.t)).style('display', null);
+        AA.showTip(ev, fmt(p.t), rowsFor(p));
+      })
+      .on('pointerleave', function () { line.style('display', 'none'); AA.hideTip(); });
+  }
+
+  /* ---------------------------------------------------------------- burn-up */
+  function scopeCards(d, scope) {
+    if (scope === 'crew') return d.cards;
+    if (scope.indexOf('s:') === 0) return d.cards.filter(function (c) { return c.sp === scope.slice(2); });
+    return d.cards.filter(function (c) { return c.e === scope.slice(2); });
+  }
+  function scopeOptions(d) {
+    var o = [['crew', 'Whole crew']];
+    d.sprints.filter(function (s) { return s.state !== 'closed'; }).concat(d.sprints.filter(function (s) { return s.state === 'closed'; }).slice(-3).reverse())
+      .forEach(function (s) { o.push(['s:' + s.id, s.name + (s.state === 'active' ? ' (running)' : s.state === 'planned' ? ' (planned)' : '')]); });
+    d.epics.forEach(function (e) { o.push(['e:' + e.id, 'Epic: ' + e.title]); });
+    return o;
+  }
+  function burnup(d3, el, d, st) {
+    var cards = scopeCards(d, st.scope), unit = st.unit, val = function (c) { return unit === 'points' ? (c.p || 0) : 1; };
+    var sprint = st.scope.indexOf('s:') === 0 ? d.sprints.filter(function (s) { return s.id === st.scope.slice(2); })[0] : null;
+    var from = sprint ? Date.parse(sprint.start) : Math.max(rangeStart(d, st.range), Math.min.apply(null, cards.map(function (c) { return c.cM; }).filter(Boolean).concat([d.nowMs])) - DAY);
+    var to = sprint && sprint.state === 'closed' ? Date.parse(sprint.end) + DAY : d.nowMs;
+    var pts = days(from, to).map(function (t) {
+      var scope = 0, done = 0;
+      cards.forEach(function (c) { if (sprint || (c.cM && c.cM <= t)) { scope += val(c); if (c.dM && c.dM <= t) done += val(c); } });
+      return { t: t, scope: scope, done: done };
+    });
+    var last = pts[pts.length - 1], left = last.scope - last.done;
+    var own = weekly(cards, d.nowMs, 8), crewW = weekly(d.cards, d.nowMs, 8);
+    var useOwn = own.filter(function (w) { return w.cards > 0; }).length >= 3, wk = (useOwn ? own : crewW).map(function (w) { return unit === 'points' ? w.points : w.cards; }).sort(d3.ascending);
+    var fc = null;
+    if (left > 0 && wk.length >= 3 && !(sprint && sprint.state === 'closed')) {
+      var lo = Math.max(d3.quantile(wk, 0.15), 0.25), mid = Math.max(d3.quantile(wk, 0.5), 0.25), hi = Math.max(d3.quantile(wk, 0.85), 0.5);
+      if (!useOwn && st.scope !== 'crew') {  // a part of the crew's work gets a part of its throughput
+        var share = Math.max(0.15, Math.min(1, cards.filter(function (c) { return c.dM && c.dM > d.nowMs - 8 * WEEK; }).length / Math.max(1, d.cards.filter(function (c) { return c.dM && c.dM > d.nowMs - 8 * WEEK; }).length)));
+        lo *= share; mid *= share; hi *= share;
+      }
+      var cap = 52 * WEEK;
+      fc = { early: d.nowMs + Math.min(cap, left / hi * WEEK), likely: d.nowMs + Math.min(cap, left / mid * WEEK), late: d.nowMs + Math.min(cap, left / lo * WEEK), lo: lo, mid: mid, hi: hi };
+    }
+    var xMax = fc ? Math.max(to, fc.late) : (sprint ? Math.max(to, Date.parse(sprint.end) + DAY) : to);
+    var budget = st.scope.indexOf('e:') === 0 && unit === 'points' ? (d.epics.filter(function (e) { return 'e:' + e.id === st.scope; })[0] || {}).budget : null;
+    var f = svgFor(d3, el, innerWidth < 600 ? 250 : 320, { l: 40, r: 70, t: 14, b: 28 });
+    var x = d3.scaleUtc().domain([from, xMax]).range([0, f.iw]);
+    var y = d3.scaleLinear().domain([0, Math.max(1, last.scope, budget || 0) * 1.08]).nice().range([f.ih, 0]);
+    axes(d3, f, x, y);
+    f.svg.attr('aria-label', 'Burn-up: ' + last.done + ' of ' + last.scope + ' ' + unit + ' done');
+    if (fc) {
+      f.g.append('path').datum([{ t: d.nowMs, y0: last.done, y1: last.done }, { t: fc.early, y0: last.done + fc.lo * (fc.early - d.nowMs) / WEEK, y1: last.scope }, { t: fc.late, y0: last.scope, y1: last.scope }])
+        .attr('d', d3.area().x(function (p) { return x(p.t); }).y0(function (p) { return y(p.y0); }).y1(function (p) { return y(p.y1); }))
+        .style('fill', 'var(--ch-1)').style('opacity', .14);
+      f.g.append('line').attr('x1', x(d.nowMs)).attr('y1', y(last.done)).attr('x2', x(fc.likely)).attr('y2', y(last.scope))
+        .style('stroke', 'var(--ch-1)').style('stroke-width', 2).style('stroke-dasharray', '6 5');
+      f.g.append('text').attr('class', 'lbl').attr('x', x(fc.likely) + 6).attr('y', y(last.scope) + 16).text('likely ' + fmtS(fc.likely));
+    }
+    if (budget) {
+      f.g.append('line').attr('x1', 0).attr('x2', f.iw).attr('y1', y(budget)).attr('y2', y(budget)).style('stroke', 'var(--c-muted)').style('stroke-dasharray', '3 4');
+      f.g.append('text').attr('class', 'lbl muted').attr('x', f.iw + 4).attr('y', y(budget) + 4).text('size ' + budget);
+    }
+    f.g.append('path').datum(pts).attr('d', d3.area().x(function (p) { return x(p.t); }).y0(f.ih).y1(function (p) { return y(p.done); }).curve(d3.curveMonotoneX))
+      .style('fill', 'var(--ch-1)').style('opacity', .12);
+    f.g.append('path').datum(pts).attr('d', d3.line().x(function (p) { return x(p.t); }).y(function (p) { return y(p.scope); }).curve(d3.curveStepAfter))
+      .style('fill', 'none').style('stroke', 'var(--ch-2)').style('stroke-width', 2);
+    f.g.append('path').datum(pts).attr('d', d3.line().x(function (p) { return x(p.t); }).y(function (p) { return y(p.done); }).curve(d3.curveMonotoneX))
+      .style('fill', 'none').style('stroke', 'var(--ch-1)').style('stroke-width', 2.5);
+    f.g.append('line').attr('x1', x(d.nowMs)).attr('x2', x(d.nowMs)).attr('y1', 0).attr('y2', f.ih).style('stroke', 'var(--c-faint)').style('stroke-dasharray', '2 3');
+    f.g.append('text').attr('class', 'lbl muted').attr('x', x(d.nowMs) + 4).attr('y', f.ih - 6).text('today');
+    f.g.append('text').attr('class', 'lbl').attr('x', Math.min(f.iw + 4, x(to) + 4)).attr('y', y(last.scope) - 6).text('scope ' + last.scope);
+    f.g.append('text').attr('class', 'lbl').attr('x', x(to) + 8).attr('y', y(last.done) + 18).text('done ' + last.done);
+    f.g.append('circle').attr('cx', x(to)).attr('cy', y(last.done)).attr('r', 5).style('fill', 'var(--ch-1)').style('stroke', 'var(--c-surface)').style('stroke-width', 2);
+    crosshair(d3, f, x, pts, function (p) { return [{ value: p.done, label: 'done', color: 'var(--ch-1)' }, { value: p.scope, label: 'scope', color: 'var(--ch-2)' }]; });
+    return {
+      kpis: [[last.done + '<small>/' + last.scope + '</small>', unit + ' done'], [last.scope ? Math.round(100 * last.done / last.scope) + '<small>%</small>' : '--', 'complete', 'cyan'],
+        [fc ? esc(fmtS(fc.likely)) : (left <= 0 ? 'DONE' : '--'), fc ? 'likely finish' : (left <= 0 ? 'all of it' : 'need 3 weeks of finishes'), 'pink'],
+        [fc ? esc(fmtS(fc.early)) + '–' + esc(fmtS(fc.late)) : '--', '70% range', 'amber']],
+      legend: [{ name: 'Done', color: 'var(--ch-1)', kind: 'line' }, { name: 'Scope', color: 'var(--ch-2)', kind: 'line' }].concat(fc ? [{ name: 'Forecast (dashed: likely; band: 15th–85th percentile weeks)', color: 'var(--ch-1)', kind: 'dash' }] : []),
+      note: fc ? 'At your recent pace (' + (Math.round(fc.mid * 10) / 10) + ' ' + unit + ' a week' + (useOwn ? '' : ', a share of the crew\'s') + '), the last ' + left + ' ' + unit + ' land around ' + fmt(fc.likely) +
+        '. A slow week pattern says ' + fmt(fc.late) + ', a fast one ' + fmt(fc.early) + '. Scope that grows moves the line up: watch the pink steps.' :
+        (left <= 0 ? 'Everything in scope is done.' : 'The forecast appears after three weeks with finished cards.'),
+      table: [['Date', 'Scope', 'Done'], pts.filter(function (p, i) { return i % Math.max(1, Math.round(pts.length / 40)) === 0 || i === pts.length - 1; }).map(function (p) { return [new Date(p.t).toISOString().slice(0, 10), p.scope, p.done]; })]
+    };
+  }
+
+  /* ---------------------------------------------------------------- Monte Carlo */
+  function forecast(d3, el, d, st) {
+    var samples = weekly(d.cards, d.nowMs, 12).map(function (w) { return w.cards; });
+    var open = function (cs) { return cs.filter(function (c) { return c.s !== 'done'; }).length; };
+    var n = st.fscope === 'custom' ? Math.max(1, +st.custom || 10) : open(scopeCards(d, st.fscope));
+    if (samples.length < 3 || !samples.some(function (s) { return s > 0; })) {
+      el.innerHTML = '<div class="rp-err muted">Monte Carlo needs at least three weeks with finished cards. Keep pulling cards to Done.</div>';
+      return { kpis: [], note: '', table: [['Week', 'Cards'], []] };
+    }
+    var r = rng(d.crew.key + st.fscope + n + st.mode + st.date), RUNS = 5000, out = [];
+    var target = st.mode === 'howmany' ? Date.parse(st.date) : null, wks = target ? Math.max(1, Math.round((target - d.nowMs) / WEEK)) : 0;
+    for (var i = 0; i < RUNS; i++) {
+      if (st.mode === 'howmany') {
+        var got = 0; for (var k = 0; k < wks; k++) got += samples[Math.floor(r() * samples.length)];
+        out.push(got);
+      } else {
+        var left = n, w = 0;
+        while (left > 0 && w < 104) { left -= samples[Math.floor(r() * samples.length)]; w++; }
+        out.push(w);
+      }
+    }
+    out.sort(d3.ascending);
+    var bins = d3.rollups(out, function (v) { return v.length; }, function (v) { return v; }).sort(function (a, b) { return a[0] - b[0]; });
+    var f = svgFor(d3, el, innerWidth < 600 ? 240 : 300, { l: 44, r: 16, t: 26, b: 34 });
+    var x = d3.scaleBand().domain(bins.map(function (b) { return b[0]; })).range([0, f.iw]).padding(0.15);
+    var y = d3.scaleLinear().domain([0, d3.max(bins, function (b) { return b[1]; }) / RUNS * 100 * 1.12]).nice().range([f.ih, 0]);
+    f.g.append('g').attr('class', 'grid').call(d3.axisLeft(y).ticks(4).tickSize(-f.iw).tickFormat(''));
+    var every = Math.ceil(bins.length / Math.max(2, Math.floor(f.iw / 46)));
+    f.g.append('g').attr('transform', 'translate(0,' + f.ih + ')').call(d3.axisBottom(x).tickValues(x.domain().filter(function (v, i) { return i % every === 0; }))
+      .tickFormat(function (v) { return st.mode === 'howmany' ? v : fmtS(d.nowMs + v * WEEK); }).tickSizeOuter(0));
+    f.g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(function (v) { return v + '%'; }).tickSizeOuter(0));
+    var p50 = pct(out, 0.5), p85 = pct(out, 0.85), p95 = pct(out, 0.95), q15 = pct(out, 0.15), q05 = pct(out, 0.05);
+    var good = function (v) { return st.mode === 'howmany' ? v >= q15 : v <= p85; };
+    f.g.selectAll('rect.bar').data(bins).join('rect').attr('class', 'bar')
+      .attr('x', function (b) { return x(b[0]); }).attr('width', x.bandwidth()).attr('y', function (b) { return y(b[1] / RUNS * 100); })
+      .attr('height', function (b) { return f.ih - y(b[1] / RUNS * 100); }).attr('rx', Math.min(4, x.bandwidth() / 3))
+      .style('fill', function (b) { return good(b[0]) ? 'var(--ch-1)' : 'var(--ch-3)'; })
+      .on('pointermove', function (ev, b) {
+        var cum = out.filter(function (v) { return st.mode === 'howmany' ? v >= b[0] : v <= b[0]; }).length / RUNS * 100;
+        AA.showTip(ev, st.mode === 'howmany' ? b[0] + ' cards by ' + fmt(target) : 'Done in week ' + b[0] + ' (by ' + fmt(d.nowMs + b[0] * WEEK) + ')',
+          [{ value: (b[1] / RUNS * 100).toFixed(1) + '%', label: 'of runs land here', color: good(b[0]) ? 'var(--ch-1)' : 'var(--ch-3)' },
+           { value: Math.round(cum) + '%', label: st.mode === 'howmany' ? 'chance of at least this many' : 'chance of being done by then' }]);
+      }).on('pointerleave', AA.hideTip);
+    var marks = st.mode === 'howmany' ? [[q05, '95%'], [q15, '85%'], [p50, '50%']] : [[p50, '50%'], [p85, '85%'], [p95, '95%']];
+    marks.forEach(function (mk) {
+      if (x(mk[0]) == null) return;
+      var xx = x(mk[0]) + x.bandwidth() / 2;
+      f.g.append('line').attr('x1', xx).attr('x2', xx).attr('y1', -6).attr('y2', f.ih).style('stroke', 'var(--c-ink)').style('stroke-dasharray', '3 3').style('opacity', .6);
+      f.g.append('text').attr('class', 'lbl').attr('x', xx).attr('y', -10).attr('text-anchor', 'middle').text(mk[1]);
+    });
+    f.svg.attr('aria-label', 'Monte Carlo forecast histogram');
+    if (st.mode === 'howmany') {
+      return { kpis: [[q15, '85% sure: at least', 'cyan'], [p50, 'coin flip: at least', 'pink'], [q05, '95% sure: at least'], [wks + '<small>wk</small>', 'until ' + esc(fmtS(target)), 'amber']],
+        legend: [{ name: 'At least the 85% number', color: 'var(--ch-1)' }, { name: 'Less likely', color: 'var(--ch-3)' }],
+        note: 'By ' + fmt(target) + ' you will very likely (85%) finish at least ' + q15 + ' cards, and at least ' + p50 + ' half the time. ' +
+          'Monte Carlo replays your real weeks (' + samples.join(', ') + ' cards) 5,000 times in random order. No estimates needed.',
+        table: [['Cards finished', 'Share of runs'], bins.map(function (b) { return [b[0], (b[1] / RUNS * 100).toFixed(1) + '%']; })] };
+    }
+    return { kpis: [[esc(fmtS(d.nowMs + p85 * WEEK)), '85% sure by', 'cyan'], [esc(fmtS(d.nowMs + p50 * WEEK)), 'coin flip by', 'pink'],
+      [esc(fmtS(d.nowMs + p95 * WEEK)), '95% sure by'], [n, 'cards to finish', 'amber']],
+      legend: [{ name: 'Done within the 85% date', color: 'var(--ch-1)' }, { name: 'Later than that', color: 'var(--ch-3)' }],
+      note: n + ' cards: there is an 85% chance they are all done by ' + fmt(d.nowMs + p85 * WEEK) + ' and a 50% chance by ' + fmt(d.nowMs + p50 * WEEK) + '. ' +
+        'Monte Carlo replays your real weeks (' + samples.join(', ') + ' cards) 5,000 times in random order. No estimates needed: it counts cards.',
+      table: [['Finished in week', 'By date', 'Share of runs'], bins.map(function (b) { return [b[0], new Date(d.nowMs + b[0] * WEEK).toISOString().slice(0, 10), (b[1] / RUNS * 100).toFixed(1) + '%']; })] };
+  }
+
+  /* ---------------------------------------------------------------- cumulative flow + brush */
+  function flowSeries(d, from, to) {
+    return days(from, to).map(function (t) {
+      var o = { t: t, todo: 0, doing: 0, review: 0, done: 0 };
+      d.cards.forEach(function (c) {
+        if (!c.cM || c.cM > t) return;
+        if (c.dM && c.dM <= t) o.done++;
+        else if (c.rvM && c.rvM <= t && c.s !== 'backlog' && c.s !== 'ready') o.review++;
+        else if (c.stM && c.stM <= t && c.s !== 'backlog' && c.s !== 'ready') o.doing++;
+        else o.todo++;
+      });
+      return o;
+    });
+  }
+  function flow(d3, el, d, st) {
+    var from = rangeStart(d, st.range), pts = flowSeries(d, from, d.nowMs);
+    var keys = STAGES.map(function (s) { return s[0]; });
+    var stack = d3.stack().keys(keys)(pts);
+    var wrap = el; wrap.innerHTML = '<div data-main></div><div data-mini></div><p class="rp-cap">Drag across the strip underneath to zoom in. Double-click it to zoom out.</p>';
+    var main = wrap.querySelector('[data-main]'), mini = wrap.querySelector('[data-mini]');
+    var f = svgFor(d3, main, innerWidth < 600 ? 240 : 300, { l: 40, r: 64, t: 10, b: 26 });
+    var x = d3.scaleUtc().domain([from, d.nowMs]).range([0, f.iw]);
+    var y = d3.scaleLinear().domain([0, d3.max(stack[stack.length - 1], function (p) { return p[1]; }) || 1]).nice().range([f.ih, 0]);
+    var clipId = 'rpclip' + Math.round(Math.random() * 1e6);
+    f.svg.append('defs').append('clipPath').attr('id', clipId).append('rect').attr('width', f.iw).attr('height', f.ih).attr('transform', 'translate(' + f.m.l + ',' + f.m.t + ')');
+    f.g.append('g').attr('class', 'grid').call(d3.axisLeft(y).ticks(5).tickSize(-f.iw).tickFormat(''));
+    var xAxis = f.g.append('g').attr('transform', 'translate(0,' + f.ih + ')');
+    f.g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')).tickSizeOuter(0));
+    var layer = f.svg.append('g').attr('clip-path', 'url(#' + clipId + ')').append('g').attr('transform', 'translate(' + f.m.l + ',' + f.m.t + ')');
+    var area = d3.area().x(function (p) { return x(p.data.t); }).y0(function (p) { return y(p[0]); }).y1(function (p) { return y(p[1]); }).curve(d3.curveMonotoneX);
+    var paths = layer.selectAll('path').data(stack).join('path').style('fill', function (s) { return STAGES[keys.indexOf(s.key)][2]; })
+      .style('stroke', 'var(--c-surface)').style('stroke-width', 2);
+    var labels = f.g.append('g');
+    function redraw() {
+      xAxis.call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(f.iw / 90))).tickFormat(d3.utcFormat('%b %d')).tickSizeOuter(0));
+      paths.attr('d', area);
+      labels.selectAll('*').remove();
+      var lastP = stack.map(function (s, i) { var p = s[s.length - 1]; return { i: i, n: p[1] - p[0], y: y((p[0] + p[1]) / 2) + 4 }; }).filter(function (l) { return l.n > 0; });
+      lastP.sort(function (a, b) { return b.y - a.y; });
+      for (var k = 1; k < lastP.length; k++) if (lastP[k - 1].y - lastP[k].y < 15) lastP[k].y = lastP[k - 1].y - 15;  // no overlapping labels
+      lastP.forEach(function (l) { labels.append('text').attr('class', 'lbl').attr('x', f.iw + 4).attr('y', l.y).text(STAGES[l.i][1] + ' ' + l.n); });
+    }
+    redraw();
+    crosshair(d3, f, x, pts, function (p) { return STAGES.map(function (s) { return { value: p[s[0]], label: s[1], color: s[2] }; }); });
+    // overview strip with a brush
+    var g2 = svgFor(d3, mini, 54, { l: 40, r: 64, t: 4, b: 18 });
+    var x2 = d3.scaleUtc().domain(x.domain()).range([0, g2.iw]), y2 = d3.scaleLinear().domain(y.domain()).range([g2.ih, 0]);
+    g2.g.append('path').datum(stack[stack.length - 1]).attr('d', d3.area().x(function (p) { return x2(p.data.t); }).y0(g2.ih).y1(function (p) { return y2(p[1]); }))
+      .style('fill', 'var(--ch-1)').style('opacity', .45);
+    g2.g.append('g').attr('transform', 'translate(0,' + g2.ih + ')').call(d3.axisBottom(x2).ticks(Math.max(2, Math.floor(g2.iw / 110))).tickFormat(d3.utcFormat('%b %d')).tickSizeOuter(0));
+    var brush = d3.brushX().extent([[0, 0], [g2.iw, g2.ih]]).on('end', function (ev) {
+      if (!ev.selection) { x.domain(x2.domain()); } else { x.domain(ev.selection.map(x2.invert)); }
+      redraw();
+    });
+    g2.g.append('g').attr('class', 'brush').call(brush).on('dblclick', function () { g2.g.select('.brush').call(brush.move, null); });
+    f.svg.attr('aria-label', 'Cumulative flow');
+    var last = pts[pts.length - 1], wk = weekly(d.cards, d.nowMs, 8), tp = d3.mean(wk, function (w) { return w.cards; }) || 0, wip = last.doing + last.review;
+    return {
+      kpis: [[wip, 'in progress now'], [Math.round(tp * 10) / 10 + '<small>/wk</small>', 'finished per week', 'cyan'],
+        [tp ? Math.round(wip / tp * 7 * 10) / 10 + '<small>d</small>' : '--', 'expected wait (WIP ÷ rate)', 'pink'], [last.todo, 'waiting to start', 'amber']],
+      legend: STAGES.map(function (s) { return { name: s[1], color: s[2] }; }),
+      note: 'Each band is how many cards sat in that stage on that day. Parallel bands mean smooth flow; a widening Doing or Review band means work is starting faster than it finishes. ' +
+        'Little\'s law: with ' + wip + ' cards in progress and about ' + (Math.round(tp * 10) / 10) + ' finished a week, a new card waits about ' + (tp ? Math.round(wip / tp * 7) : '?') + ' days.',
+      table: [['Date', 'To do', 'Doing', 'Review', 'Done'], pts.filter(function (p, i) { return i % Math.max(1, Math.round(pts.length / 40)) === 0 || i === pts.length - 1; })
+        .map(function (p) { return [new Date(p.t).toISOString().slice(0, 10), p.todo, p.doing, p.review, p.done]; })]
+    };
+  }
+
+  /* ---------------------------------------------------------------- control chart */
+  function cycle(d3, el, d, st) {
+    var from = rangeStart(d, st.range);
+    var pts = d.cards.filter(function (c) { return c.dM && c.stM && c.dM >= from; }).map(function (c) { return { c: c, t: c.dM, v: Math.max(0.05, (c.dM - c.stM) / DAY) }; })
+      .sort(function (a, b) { return a.t - b.t; });
+    if (pts.length < 2) { el.innerHTML = '<div class="rp-err muted">Cycle times appear once cards go from Doing to Done.</div>'; return { kpis: [], note: '', table: [['Card', 'Days'], []] }; }
+    var vals = pts.map(function (p) { return p.v; }).sort(d3.ascending), p50 = d3.quantile(vals, 0.5), p85 = d3.quantile(vals, 0.85);
+    var f = svgFor(d3, el, innerWidth < 600 ? 260 : 320, { l: 40, r: 50, t: 12, b: 26 });
+    var x0 = d3.scaleUtc().domain([from, d.nowMs]).range([0, f.iw]), x = x0.copy();
+    var y = d3.scaleSymlog().constant(1).domain([0, d3.max(vals) * 1.1]).range([f.ih, 0]);
+    var ticks = [0, 1, 2, 5, 10, 20, 50, 100].filter(function (t) { return t <= y.domain()[1]; });
+    f.g.append('g').attr('class', 'grid').call(d3.axisLeft(y).tickValues(ticks).tickSize(-f.iw).tickFormat(''));
+    f.g.append('g').call(d3.axisLeft(y).tickValues(ticks).tickFormat(function (v) { return v + 'd'; }).tickSizeOuter(0));
+    var xAxis = f.g.append('g').attr('transform', 'translate(0,' + f.ih + ')');
+    var clipId = 'rpclipc' + Math.round(Math.random() * 1e6);
+    f.svg.append('defs').append('clipPath').attr('id', clipId).append('rect').attr('x', -6).attr('y', -6).attr('width', f.iw + 12).attr('height', f.ih + 12);
+    var plot = f.g.append('g').attr('clip-path', 'url(#' + clipId + ')');
+    [[p50, '50%'], [p85, '85%']].forEach(function (r) {
+      f.g.append('line').attr('x1', 0).attr('x2', f.iw).attr('y1', y(r[0])).attr('y2', y(r[0])).style('stroke', 'var(--c-muted)').style('stroke-dasharray', '4 4');
+      f.g.append('text').attr('class', 'lbl muted').attr('x', f.iw + 4).attr('y', y(r[0]) + 4).text(r[1] + ' ' + (Math.round(r[0] * 10) / 10) + 'd');
+    });
+    var roll = pts.map(function (p, i) { var win = pts.slice(Math.max(0, i - 9), i + 1); return { t: p.t, v: d3.mean(win, function (q) { return q.v; }) }; });
+    var rline = plot.append('path').datum(roll).style('fill', 'none').style('stroke', 'var(--c-ink)').style('stroke-width', 1.5).style('opacity', .55);
+    var dots = plot.selectAll('circle').data(pts).join('circle').attr('class', 'dot').attr('r', 5)
+      .style('fill', function (p) { return p.c.a ? 'var(--ch-3)' : 'var(--ch-2)'; }).style('stroke', 'var(--c-surface)').style('stroke-width', 2)
+      .on('pointermove', function (ev, p) {
+        AA.showTip(ev, p.c.k + ' · ' + (p.c.p == null ? '?' : p.c.p) + ' pts · ' + (p.c.w || 'unassigned'), [{ value: (Math.round(p.v * 10) / 10) + 'd', label: p.c.t, color: p.c.a ? 'var(--ch-3)' : 'var(--ch-2)' }]);
+      }).on('pointerleave', AA.hideTip).on('click', function (ev, p) { AA.hideTip(); UI.go('card', p.c.k); });
+    function redraw() {
+      xAxis.call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(f.iw / 90))).tickFormat(d3.utcFormat('%b %d')).tickSizeOuter(0));
+      dots.attr('cx', function (p) { return x(p.t); }).attr('cy', function (p) { return y(p.v); });
+      rline.attr('d', d3.line().x(function (p) { return x(p.t); }).y(function (p) { return y(p.v); }).curve(d3.curveMonotoneX));
+    }
+    redraw();
+    var zoom = d3.zoom().scaleExtent([1, 12]).translateExtent([[0, 0], [f.iw, f.ih]]).extent([[0, 0], [f.iw, f.ih]])
+      .filter(function (ev) { return ev.type !== 'wheel' || ev.ctrlKey || ev.shiftKey; })
+      .on('zoom', function (ev) { x = ev.transform.rescaleX(x0); redraw(); });
+    f.svg.call(zoom).on('dblclick.zoom', function () { f.svg.transition().duration(250).call(zoom.transform, d3.zoomIdentity); });
+    f.svg.attr('aria-label', 'Cycle time control chart');
+    var ag = pts.filter(function (p) { return p.c.a; }).map(function (p) { return p.v; }).sort(d3.ascending), hu = pts.filter(function (p) { return !p.c.a; }).map(function (p) { return p.v; }).sort(d3.ascending);
+    var slow = pts.filter(function (p) { return p.v > p85; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 3);
+    return {
+      kpis: [[Math.round(p50 * 10) / 10 + '<small>d</small>', 'half finish within'], [Math.round(p85 * 10) / 10 + '<small>d</small>', '85% finish within', 'pink'],
+        [hu.length ? Math.round(d3.quantile(hu, 0.5) * 10) / 10 + '<small>d</small>' : '--', 'humans, median', 'cyan'], [ag.length ? Math.round(d3.quantile(ag, 0.5) * 10) / 10 + '<small>d</small>' : '--', 'agents, median', 'amber']],
+      legend: [{ name: 'Humans', color: 'var(--ch-2)' }, { name: 'Agents', color: 'var(--ch-3)' }, { name: 'Rolling average (10 cards)', color: 'var(--c-ink)', kind: 'line' }],
+      note: 'Each dot is a finished card: days from start to done. Use the 85% line when someone asks "when will it be done?": ' + Math.round(p85) + ' days covers most cards. ' +
+        (slow.length ? 'Slowest: ' + slow.map(function (p) { return p.c.k + ' (' + Math.round(p.v) + 'd)'; }).join(', ') + '. ' : '') + 'Shift + scroll or drag to zoom, double-click to reset, click a dot to open the card.',
+      table: [['Card', 'Finished', 'Days', 'Points', 'By'], pts.slice().reverse().map(function (p) { return [p.c.k, new Date(p.t).toISOString().slice(0, 10), Math.round(p.v * 10) / 10, p.c.p == null ? '' : p.c.p, p.c.w || '']; })]
+    };
+  }
+
+  /* ---------------------------------------------------------------- epic treemap */
+  function stageOf(c) { return c.s === 'done' ? 'done' : c.s === 'review' ? 'review' : c.s === 'doing' ? 'doing' : 'todo'; }
+  function epics(d3, el, d, st) {
+    var groups = d.epics.map(function (e) { return { e: e, cards: d.cards.filter(function (c) { return c.e === e.id; }) }; });
+    groups.push({ e: { id: 'none', title: 'No epic', color: '#888' }, cards: d.cards.filter(function (c) { return !c.e && c.s !== 'done'; }) });
+    if (st.open) groups.forEach(function (g) { g.cards = g.cards.filter(function (c) { return c.s !== 'done'; }); });
+    groups = groups.filter(function (g) { return g.cards.length; });
+    if (!groups.length) { el.innerHTML = '<div class="rp-err muted">No cards to map yet.</div>'; return { kpis: [], note: '', table: [['Epic'], []] }; }
+    var root = d3.hierarchy({ children: groups.map(function (g) { return { g: g, children: g.cards.map(function (c) { return { c: c, value: c.p || 1 }; }) }; }) })
+      .sum(function (n) { return n.value || 0; }).sort(function (a, b) { return b.value - a.value; });
+    var f = svgFor(d3, el, innerWidth < 600 ? 420 : 460, { l: 0, r: 0, t: 0, b: 0 });
+    d3.treemap().size([f.iw, f.ih]).paddingOuter(3).paddingTop(20).paddingInner(2).round(true)(root);
+    var fill = {}; STAGES.forEach(function (s) { fill[s[0]] = s[2]; });
+    var ep = f.g.selectAll('g.ep').data(root.children).join('g').attr('class', 'ep');
+    ep.append('rect').attr('x', function (n) { return n.x0; }).attr('y', function (n) { return n.y0; }).attr('width', function (n) { return n.x1 - n.x0; })
+      .attr('height', function (n) { return n.y1 - n.y0; }).style('fill', 'var(--c-surface-2)').style('stroke', 'var(--c-edge)').style('stroke-width', 2);
+    ep.append('rect').attr('x', function (n) { return n.x0; }).attr('y', function (n) { return n.y0; }).attr('width', 5).attr('height', function (n) { return n.y1 - n.y0; })
+      .style('fill', function (n) { return n.data.g.e.color; });
+    ep.append('text').attr('class', 'tm-head').attr('x', function (n) { return n.x0 + 10; }).attr('y', function (n) { return n.y0 + 14; })
+      .text(function (n) {
+        var w = n.x1 - n.x0 - 16, done = n.data.g.cards.filter(function (c) { return c.s === 'done'; }).reduce(function (a, c) { return a + (c.p || 1); }, 0);
+        var t = n.data.g.e.title + ' · ' + Math.round(100 * done / n.value) + '%';
+        return w < 40 ? '' : t.length * 8.2 > w ? t.slice(0, Math.max(1, Math.floor(w / 8.2) - 1)) + '…' : t;
+      });
+    f.g.selectAll('rect.tm-leaf').data(root.leaves()).join('rect').attr('class', 'tm-leaf')
+      .attr('x', function (n) { return n.x0; }).attr('y', function (n) { return n.y0; }).attr('width', function (n) { return Math.max(0, n.x1 - n.x0); })
+      .attr('height', function (n) { return Math.max(0, n.y1 - n.y0); }).attr('rx', 2).style('fill', function (n) { return fill[stageOf(n.data.c)]; })
+      .on('pointermove', function (ev, n) {
+        var c = n.data.c;
+        AA.showTip(ev, c.k + ' · ' + n.parent.data.g.e.title, [{ value: c.p == null ? '?' : c.p, label: 'pts · ' + AA.STATUS[c.s] + ' · ' + c.t, color: fill[stageOf(c)] }]);
+      }).on('pointerleave', AA.hideTip).on('click', function (ev, n) { AA.hideTip(); UI.go('card', n.data.c.k); });
+    f.svg.attr('aria-label', 'Epic map');
+    var rows = groups.map(function (g) {
+      var pts = g.cards.reduce(function (a, c) { return a + (c.p || 0); }, 0), done = g.cards.filter(function (c) { return c.s === 'done'; }).reduce(function (a, c) { return a + (c.p || 0); }, 0);
+      return [g.e.title, g.cards.length, pts, done, pts ? Math.round(100 * done / pts) + '%' : '', g.e.size || ''];
+    });
+    var biggest = root.children[0];
+    return {
+      kpis: [[groups.length, 'epics with cards'], [root.leaves().length, st.open ? 'open cards' : 'cards', 'cyan'],
+        [Math.round(root.value), 'points (unestimated = 1)', 'pink'], [esc(biggest.data.g.e.title.length > 14 ? biggest.data.g.e.title.slice(0, 13) + '…' : biggest.data.g.e.title), 'biggest', 'amber']],
+      legend: STAGES.map(function (s) { return { name: s[1], color: s[2] }; }),
+      note: 'Every box is a card, sized by its points (unestimated cards count as 1) and coloured by stage. Big pale areas are work nobody has started. Click a box to open the card.',
+      table: [['Epic', 'Cards', 'Points', 'Done points', 'Done', 'Size'], rows]
+    };
+  }
+
+  /* ---------------------------------------------------------------- work mix */
+  function mix(d3, el, d, st) {
+    var weeks = st.range === 'all' ? Math.min(52, Math.ceil((d.nowMs - d.firstMs) / WEEK)) : +st.range;
+    var series = st.by === 'who' ? [['human', 'Humans', 'var(--ch-2)'], ['agent', 'Agents', 'var(--ch-3)']]
+      : [['story', 'Features', 'var(--ch-1)'], ['bug', 'Bugs', 'var(--ch-2)'], ['other', 'Other work', 'var(--ch-3)']];
+    var keyOf = function (c) { return st.by === 'who' ? (c.a ? 'agent' : 'human') : (c.y === 'story' || c.y === 'bug' ? c.y : 'other'); };
+    var data = [];
+    for (var i = weeks - 1; i >= 0; i--) {
+      var hi = d.nowMs - i * WEEK, lo = hi - WEEK, o = { t: lo };
+      series.forEach(function (s) { o[s[0]] = 0; });
+      d.cards.forEach(function (c) { if (c.dM && c.dM > lo && c.dM <= hi) o[keyOf(c)] += st.unit === 'points' ? (c.p || 0) : 1; });
+      data.push(o);
+    }
+    var stack = d3.stack().keys(series.map(function (s) { return s[0]; }))(data);
+    var f = svgFor(d3, el, innerWidth < 600 ? 240 : 300, { l: 40, r: 12, t: 12, b: 26 });
+    var x = d3.scaleBand().domain(data.map(function (o) { return o.t; })).range([0, f.iw]).padding(0.25);
+    var y = d3.scaleLinear().domain([0, d3.max(stack[stack.length - 1], function (p) { return p[1]; }) || 1]).nice().range([f.ih, 0]);
+    f.g.append('g').attr('class', 'grid').call(d3.axisLeft(y).ticks(5).tickSize(-f.iw).tickFormat(''));
+    var every = Math.ceil(data.length / Math.max(2, Math.floor(f.iw / 70)));
+    f.g.append('g').attr('transform', 'translate(0,' + f.ih + ')').call(d3.axisBottom(x).tickValues(x.domain().filter(function (v, i) { return i % every === 0; })).tickFormat(function (v) { return fmtS(v); }).tickSizeOuter(0));
+    f.g.append('g').call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('~s')).tickSizeOuter(0));
+    f.g.selectAll('g.layer').data(stack).join('g').attr('class', 'layer').style('fill', function (s, i) { return series[i][2]; })
+      .selectAll('rect').data(function (s) { return s; }).join('rect')
+      .attr('x', function (p) { return x(p.data.t); }).attr('width', x.bandwidth()).attr('y', function (p) { return y(p[1]); })
+      .attr('height', function (p) { return Math.max(0, y(p[0]) - y(p[1]) - (p[1] > p[0] ? 2 : 0)); })
+      .on('pointermove', function (ev, p) {
+        AA.showTip(ev, 'Week of ' + fmt(p.data.t), series.slice().reverse().map(function (s) { return { value: p.data[s[0]], label: s[1], color: s[2] }; }));
+      }).on('pointerleave', AA.hideTip);
+    f.svg.attr('aria-label', 'Work mix per week');
+    var sum = function (arr, k) { return arr.reduce(function (a, o) { return a + o[k]; }, 0); };
+    var tot = function (arr) { return series.reduce(function (a, s) { return a + sum(arr, s[0]); }, 0); };
+    var recent = data.slice(-4), before = data.slice(0, -4), focus = st.by === 'who' ? 'agent' : 'bug';
+    var share = function (arr) { var t = tot(arr); return t ? Math.round(100 * sum(arr, focus) / t) : null; };
+    var sr = share(recent), sb = share(before);
+    return {
+      kpis: series.map(function (s, i) { return [sum(data, s[0]), s[1] + ' (' + st.unit + ')', ['', 'pink', 'cyan'][i]]; }).concat([[sr == null ? '--' : sr + '<small>%</small>', (st.by === 'who' ? 'agent' : 'bug') + ' share, last 4 wk', 'amber']]),
+      legend: series.map(function (s) { return { name: s[1], color: s[2] }; }),
+      note: st.by === 'who' ? 'Who finished the work each week. ' + (sr != null ? 'Agents did ' + sr + '% of it in the last 4 weeks' + (sb != null ? ' (' + sb + '% before).' : '.') : '')
+        : 'What the crew finished each week. ' + (sr != null ? 'Bugs were ' + sr + '% of it in the last 4 weeks' + (sb != null ? ' (' + sb + '% before)' : '') + '. A rising bug share eats into feature time.' : ''),
+      table: [['Week of'].concat(series.map(function (s) { return s[1]; })), data.map(function (o) { return [new Date(o.t).toISOString().slice(0, 10)].concat(series.map(function (s) { return o[s[0]]; })); })]
+    };
+  }
+
+  var DRAW = { burnup: burnup, forecast: forecast, flow: flow, cycle: cycle, epics: epics, mix: mix };
+  var INTRO = {
+    burnup: 'How much is done against how much there is, over time, and when the rest will likely land.',
+    forecast: 'Forecasts from your real weekly throughput. No story points needed.',
+    flow: 'Where work piles up: cards per stage, every day.',
+    cycle: 'How long cards take from start to done, and which ones were outliers.',
+    epics: 'All the work at a glance: epics, their cards, and what is done.',
+    mix: 'What kind of work the crew finished each week, and who finished it.'
+  };
+
+  UI.page('reports', { title: 'Reports', nav: 'Reports', icon: 'chart', auth: 'user', order: 60 }, function (view, ctx) {
+    var tab = TABS.some(function (t) { return t[0] === ctx.args[0]; }) ? ctx.args[0] : 'burnup';
+    var st = UI.store.get('rp.st', {});
+    st = { range: st.range || '12', unit: st.unit || 'cards', scope: 'crew', fscope: 'crew', mode: st.mode || 'when', custom: 20, by: st.by || 'type', open: st.open !== false,
+      date: new Date(Date.now() + 6 * WEEK).toISOString().slice(0, 10) };
+    var data = null, d3 = null, result = null;
+    view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:460px"></div></div>';
+
+    function controls() {
+      var seg = function (name, opts, cur) {
+        return '<div class="ui-seg" role="group" aria-label="' + name + '">' + opts.map(function (o) { return '<button type="button" data-set="' + name + '" data-v="' + o[0] + '" class="' + (String(cur) === o[0] ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') + '</div>';
+      };
+      var range = seg('range', [['4', '4W'], ['12', '12W'], ['26', '26W'], ['all', 'ALL']], st.range);
+      var unit = seg('unit', [['cards', 'Cards'], ['points', 'Points']], st.unit);
+      var scopes = scopeOptions(data);
+      var sel = function (name, opts, cur) { return '<select data-sel="' + name + '" aria-label="' + name + '">' + opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (o[0] === cur ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>'; };
+      if (tab === 'burnup') return sel('scope', scopes, st.scope) + (st.scope.indexOf('s:') === 0 ? '' : range) + unit;
+      if (tab === 'forecast') return seg('mode', [['when', 'When done?'], ['howmany', 'How many by?']], st.mode) +
+        (st.mode === 'when' ? sel('fscope', scopes.map(function (o) { return [o[0], o[1] + ' (open cards)']; }).concat([['custom', 'A number of cards...']]), st.fscope) +
+          (st.fscope === 'custom' ? '<input type="number" min="1" max="2000" data-sel="custom" value="' + st.custom + '" aria-label="Number of cards" style="width:100px">' : '')
+          : '<label class="small">By <input type="date" data-sel="date" value="' + esc(st.date) + '" min="' + new Date(Date.now() + WEEK).toISOString().slice(0, 10) + '"></label>');
+      if (tab === 'flow' || tab === 'cycle') return range;
+      if (tab === 'epics') return seg('open', [['true', 'Open work'], ['false', 'Everything']], String(st.open));
+      if (tab === 'mix') return seg('by', [['type', 'By type'], ['who', 'By who']], st.by) + range + unit;
+      return '';
+    }
+    function draw() {
+      var crew = data.crew;
+      view.innerHTML = '<div class="ui-wrap"><div class="aa-head"><div><div class="eyebrow">Reports // ' + esc(crew.key) + '</div><h1>' + esc(TABS.filter(function (t) { return t[0] === tab; })[0][1]) + '</h1>' +
+        '<div class="sub">' + esc(INTRO[tab]) + '</div></div><div class="ui-row"><a class="ui-btn" href="#insights" data-go="insights">' + UI.icon('chart') + 'Insights</a>' +
+        '<button class="ui-btn" data-csv>' + UI.icon('download') + 'CSV</button><button class="ui-btn" data-print>' + UI.icon('printer') + 'Print</button></div></div>' + AA.demoNote(crew) +
+        '<nav class="rp-tabs" aria-label="Reports">' + TABS.map(function (t) { return '<a href="#reports/' + t[0] + '" data-go="reports/' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</a>'; }).join('') + '</nav>' +
+        '<div class="rp-ctl">' + controls() + '<span class="grow"></span></div>' +
+        '<div class="aa-lcds rp-kpis" data-kpis></div>' +
+        AA.win(esc(TABS.filter(function (t) { return t[0] === tab; })[0][1]) + ' // ' + esc(crew.key), '<p class="rp-note" data-note></p><div data-legend></div><div data-chart></div><div data-table></div>', { cls: 'lime', extra: 'd3' }) + '</div>';
+      chart();
+    }
+    function chart() {
+      var el = view.querySelector('[data-chart]');
+      if (!el || !view.isConnected) return false;
+      try { result = DRAW[tab](d3, el, data, st); }
+      catch (e) { el.innerHTML = '<div class="rp-err muted">This report could not be drawn: ' + esc(e.message) + '</div>'; result = null; if (window.console) console.warn(e); return; }
+      view.querySelector('[data-kpis]').innerHTML = (result.kpis || []).map(function (k) { return AA.lcd(k[0], k[1], k[2]); }).join('');
+      view.querySelector('[data-note]').textContent = result.note || '';
+      view.querySelector('[data-legend]').innerHTML = legend(result.legend || []);
+      view.querySelector('[data-table]').innerHTML = result.table && result.table[1].length ? AA.table(result.table[0], result.table[1]) : '';
+    }
+    view.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-set]');
+      if (b) {
+        var k = b.getAttribute('data-set'), v = b.getAttribute('data-v');
+        st[k] = k === 'open' ? v === 'true' : v;
+        UI.store.set('rp.st', { range: st.range, unit: st.unit, mode: st.mode, by: st.by, open: st.open });
+        draw(); return;
+      }
+      if (e.target.closest('[data-print]')) { view.querySelectorAll('details.aa-tv').forEach(function (x) { x.open = true; }); window.print(); }
+      if (e.target.closest('[data-csv]') && result && result.table) {
+        AA.download(data.crew.key + '-' + tab + '-' + new Date().toISOString().slice(0, 10) + '.csv', AA.toCSV([result.table[0]].concat(result.table[1])), 'text/csv');
+      }
+    });
+    view.addEventListener('change', function (e) {
+      var s = e.target.closest('[data-sel]');
+      if (!s) return;
+      st[s.getAttribute('data-sel')] = s.value;
+      draw();
+    });
+    return AA.withCrew(view, function (crew) {
+      return Promise.all([UI.api('get_reports', crew.id), AA.d3()]).then(function (r) {
+        data = prep(r[0]); d3 = r[1];
+        draw();
+        AA.onResize(chart);
+      }, function (err) {
+        view.innerHTML = '<div class="ui-wrap"><div class="rp-err">' + esc(err && err.message || 'Reports could not load.') + '</div></div>';
+      });
+    });
+  });
+})();
+
+/* ===== requests.html ===== */
+(function () {
+  var esc = UI.esc;
+
+  function stTag(r) {
+    if (r.status === 'open') return r.overdue ? '<span class="rq-st late">overdue by ' + Math.max(1, -r.due_in) + 'd</span>'
+      : '<span class="rq-st open">' + (r.due_in === 0 ? 'answer due today' : 'answer due in ' + r.due_in + 'd') + '</span>';
+    if (r.shipped) return '<span class="rq-st shipped">shipped</span>';
+    return '<span class="rq-st ' + r.status + '">' + esc(r.status) + '</span>';
+  }
+  function item(r, o) {
+    return '<article class="rq-item" data-rid="' + esc(r.id) + '"><button type="button" class="rq-vote' + (r.voted ? ' on' : '') + '" data-vote="' + esc(r.id) + '"' + (o.canVote ? '' : ' disabled') +
+      ' aria-pressed="' + r.voted + '" aria-label="' + (r.voted ? 'Remove your vote' : 'Vote') + ' (' + r.votes + ' votes)" title="' + (r.voted ? 'You voted. Click to take it back.' : 'Vote for this') + '">' + r.votes + '<small>VOTES</small></button>' +
+      '<div><h3>' + esc(r.title) + '</h3><div class="rq-meta">' + stTag(r) + '<span>by ' + esc(r.by) + (r.mine ? ' (you)' : '') + ' · ' + esc(UI.ago(r.created)) + '</span>' +
+      (r.card ? '<a href="#card/' + esc(r.card.key) + '"' + (o.crew ? ' data-card="' + esc(r.card.key) + '"' : '') + '>' + esc(r.card.key) + ' · ' + esc(AA.STATUS[r.card.status]) + '</a>' : '') + '</div>' +
+      (r.body ? '<p class="rq-body">' + esc(r.body) + '</p>' : '') +
+      (r.status !== 'open' && (r.answer || r.answered_by) ? '<div class="rq-answer"><b>' + esc(r.answered_by || 'The crew') + ' answered' + (r.took != null ? ' in ' + UI.plural(r.took, 'day') : '') + '</b>' + esc(r.answer || 'Accepted.') + '</div>' : '') +
+      (o.crew ? '<div class="rq-acts">' + (r.status === 'open' ? '<button class="ui-btn sm primary" data-ans="accepted" data-id="' + esc(r.id) + '">' + UI.icon('check') + 'Accept</button>' +
+        '<button class="ui-btn sm" data-ans="later" data-id="' + esc(r.id) + '">Later</button><button class="ui-btn sm danger" data-ans="declined" data-id="' + esc(r.id) + '">Decline</button>'
+        : '<button class="ui-btn sm ghost" data-ans="open" data-id="' + esc(r.id) + '">Reopen</button>') + '</div>' : '') + '</div></article>';
+  }
+  function kpis(s, promise) {
+    return '<div class="aa-lcds" style="margin-bottom:16px">' + AA.lcd(s.open, 'open') + AA.lcd(s.overdue, 'past the ' + promise + '-day promise', s.overdue ? 'red' : 'cyan') +
+      AA.lcd(s.median_days == null ? '--' : s.median_days + '<small>d</small>', 'median time to answer', 'pink') +
+      AA.lcd(s.on_time == null ? '--' : s.on_time + '<small>%</small>', 'answered on time', 'amber') + AA.lcd(s.shipped, 'shipped') + '</div>';
+  }
+  function answerFlow(rid, status, done) {
+    if (status === 'open') return UI.api('answer_request', rid, 'open', '').then(done);
+    var words = { accepted: ['Accept this request?', 'It becomes a card in the backlog, and the requester sees it move to Shipped. A note is optional.', 'Accept'],
+      later: ['Not now, maybe later', 'Say why and when you might look again. A reason makes a "not now" fair.', 'Answer: later'],
+      declined: ['Decline this request', 'Say why in a sentence or two. People take a clear no better than silence.', 'Decline'] }[status];
+    var m = UI.modal('<h2>' + esc(words[0]) + '</h2><p class="muted">' + esc(words[1]) + '</p><form data-af class="ui-stack"><label class="ui-field"><span>Answer ' + (status === 'accepted' ? '<em>(optional)</em>' : '') + '</span>' +
+      '<textarea name="answer" rows="3" maxlength="1000"' + (status === 'accepted' ? '' : ' required minlength="10"') + '></textarea></label>' +
+      '<div class="ui-row end"><button type="button" class="ui-btn ghost" data-close>Cancel</button><button class="ui-btn ' + (status === 'declined' ? 'danger solid' : 'primary') + '" type="submit">' + esc(words[2]) + '</button></div></form>');
+    m.el.querySelector('[data-af]').addEventListener('submit', function (e) {
+      e.preventDefault();
+      UI.busy(e.target.querySelector('[type=submit]'), UI.api('answer_request', rid, status, UI.formData(e.target).answer)).then(function (r) {
+        m.close(); UI.toast(status === 'accepted' ? 'Accepted: ' + r.request.card.key + ' is in the backlog' : 'Answered', 'ok'); done();
+      });
+    });
+  }
+
+  UI.page('requests', { title: 'Requests', auth: 'user' }, function (view, ctx) {
+    view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:420px"></div></div>';
+    return AA.withCrew(view, function (crew) {
+      return UI.api('get_requests', crew.id).then(function (d) {
+        var link = location.origin + location.pathname + '#ask/' + d.ask_code;
+        var open = d.requests.filter(function (r) { return r.status === 'open'; }), done = d.requests.filter(function (r) { return r.status !== 'open'; });
+        view.innerHTML = '<div class="ui-wrap"><div class="aa-head"><div><div class="eyebrow">Requests // ' + esc(d.crew.key) + '</div><h1>Requests</h1>' +
+          '<div class="sub">Every request gets an answer within ' + d.promise_days + ' days: yes, later or no, with a reason.</div></div>' +
+          '<div class="ui-row"><a class="ui-btn" href="#ask/' + esc(d.ask_code) + '" data-go="ask/' + esc(d.ask_code) + '">' + UI.icon('megaphone') + 'What requesters see</a></div></div>' + AA.demoNote(crew) +
+          kpis(d.stats, d.promise_days) +
+          '<div class="rq-grid"><div class="ui-stack">' +
+          AA.win('Waiting for an answer', open.length ? open.map(function (r) { return item(r, { crew: true, canVote: true }); }).join('') : '<p class="muted small" style="margin:0">Inbox zero. ' + AA.smiley(20) + ' Share the link so people can ask.</p>', { extra: open.length + ' open', cls: open.some(function (r) { return r.overdue; }) ? 'warn' : '' }) +
+          AA.win('Answered', done.length ? done.map(function (r) { return item(r, { crew: true, canVote: true }); }).join('') : '<p class="muted small" style="margin:0">Answers show up here, with how long each took.</p>', { extra: done.length + '', cls: 'cyan' }) +
+          '</div><div class="ui-stack">' +
+          AA.win('Share the ask link', '<p class="small muted" style="margin-top:0">Anyone signed in with this link can add requests and vote. They see the requests and your answers, never the board.</p>' +
+            '<code class="rq-link" data-asklink>' + esc(link) + '</code><div class="ui-row" style="margin-top:10px"><button class="ui-btn sm" data-copy="[data-asklink]">' + UI.icon('copy') + 'Copy link</button>' +
+            (d.can_admin ? '<button class="ui-btn sm" data-newask>' + UI.icon('refresh') + 'New link</button>' : '') + '</div>', { cls: 'lime' }) +
+          AA.win('Answer promise', '<p class="small muted" style="margin-top:0">How long people wait, at most, before the crew answers. Overdue requests show on the Deck and can alert the crew.</p>' +
+            '<div class="ui-seg" role="group" aria-label="Answer promise">' + d.promises.map(function (p) { return '<button type="button" data-promise="' + p + '" class="' + (p === d.promise_days ? 'on' : '') + '">' + p + ' days</button>'; }).join('') + '</div>') +
+          AA.win('Add one for someone', '<form data-addreq class="ui-stack"><label class="ui-field"><span>Title</span><input type="text" name="title" maxlength="140" required placeholder="What do they need?"></label>' +
+            '<label class="ui-field"><span>Details <em>(optional)</em></span><textarea name="body" rows="3" maxlength="3000" placeholder="Who asked, why it matters"></textarea></label>' +
+            '<button class="ui-btn sm primary" type="submit">' + UI.icon('plus') + 'Add request</button></form>', { cls: 'cyan' }) +
+          '</div></div></div>';
+        view.onclick = function (e) {
+          var t;
+          if ((t = e.target.closest('[data-vote]'))) UI.api('vote_request', t.getAttribute('data-vote'), !t.classList.contains('on')).then(function () { UI.refresh(); });
+          else if ((t = e.target.closest('[data-ans]'))) answerFlow(t.getAttribute('data-id'), t.getAttribute('data-ans'), function () { UI.refresh(); });
+          else if ((t = e.target.closest('[data-promise]'))) UI.api('update_crew', crew.id, { promise_days: +t.getAttribute('data-promise') }).then(function () { UI.toast('Answer promise saved', 'ok'); UI.refresh(); });
+          else if (e.target.closest('[data-newask]')) UI.confirm({ title: 'Make a new ask link?', text: 'The old link stops working. Share the new one.', ok: 'New link' }).then(function (y) { if (y) UI.api('new_ask_code', crew.id).then(function () { UI.refresh(); }); });
+        };
+        view.onsubmit = function (e) {
+          if (!e.target.matches('[data-addreq]')) return;
+          e.preventDefault();
+          var v = UI.formData(e.target);
+          UI.busy(e.target.querySelector('[type=submit]'), UI.api('submit_request', v.title, v.body, crew.id)).then(function () { UI.toast('Request added', 'ok'); UI.refresh(); });
+        };
+      });
+    });
+  });
+
+  UI.page('ask', { title: 'Ask a crew', auth: 'user' }, function (view, ctx) {
+    var code = (ctx.args[0] || '').toUpperCase();
+    view.innerHTML = '<div class="ui-wrap"><div class="ui-skel" style="height:420px"></div></div>';
+    return UI.apiQuiet('ask_page', code).catch(function (e) { return { ok: false, error: e.message }; }).then(function (d) {
+      if (!d.ok) {
+        view.innerHTML = '<div class="ui-wrap"><div class="aa-head"><div><div class="eyebrow">Ask</div><h1>That link doesn\'t work</h1><div class="sub">' + esc(d.error) + '</div></div></div>' + AA.smiley(80, '#ff2bd6') + '</div>';
+        return;
+      }
+      var c = d.crew;
+      view.innerHTML = '<div class="ui-wrap"><div class="aa-head"><div><div class="eyebrow">Ask // ' + esc(c.key) + '</div><h1>Ask ' + esc(c.name) + '</h1>' +
+        '<div class="sub">' + esc(c.mission || 'Tell the crew what you need.') + '</div></div>' + (c.id ? '<div class="ui-row"><a class="ui-btn" href="#requests" data-go="requests" data-crewid="' + esc(c.id) + '">' + UI.icon('inbox') + 'Crew request desk</a></div>' : '') + '</div>' +
+        (c.demo ? '<div class="aa-demo-note"><b>DEMO CREW</b> // a sandbox: anything you add here is visible to everyone signed in.</div>' : '') +
+        '<div class="rq-grid"><div class="ui-stack">' +
+        AA.win('Requests', d.requests.length ? d.requests.map(function (r) { return item(r, { crew: false, canVote: r.status === 'open' }); }).join('') : '<p class="muted small" style="margin:0">Nothing asked yet. Be the first.</p>', { extra: d.stats.open + ' open' }) +
+        '</div><div class="ui-stack">' +
+        AA.win('Ask for something', '<form data-ask class="ui-stack"><label class="ui-field"><span>What do you need?</span><input type="text" name="title" maxlength="140" required placeholder="One line, like a headline"></label>' +
+          '<label class="ui-field"><span>Why it matters <em>(optional)</em></span><textarea name="body" rows="4" maxlength="3000" placeholder="Who is it for? What happens today without it?"></textarea></label>' +
+          '<button class="ui-btn primary" type="submit">' + UI.icon('megaphone') + 'Send the request</button></form>', { cls: 'lime' }) +
+        AA.win('The promise', '<div class="rq-hero">' + AA.smiley(54) + '<p style="margin:0;flex:1;min-width:180px">' + esc(c.name) + ' answers every request within <b>' + d.promise_days + ' days</b>: yes (and you watch it ship), later, or no, always with a reason.</p></div>' +
+          '<div class="aa-lcds" style="margin-top:12px">' + AA.lcd(d.stats.median_days == null ? '--' : d.stats.median_days + '<small>d</small>', 'median answer', 'pink') + AA.lcd(d.stats.shipped, 'shipped', 'cyan') + '</div>', { cls: 'cyan' }) +
+        '</div></div></div>';
+      view.onclick = function (e) {
+        var t;
+        if ((t = e.target.closest('[data-vote]')) && !t.disabled) UI.api('vote_request', t.getAttribute('data-vote'), !t.classList.contains('on'), code).then(function () { UI.refresh(); });
+        else if ((t = e.target.closest('[data-crewid]'))) AA.setCrew(t.getAttribute('data-crewid'));
+      };
+      view.onsubmit = function (e) {
+        if (!e.target.matches('[data-ask]')) return;
+        e.preventDefault();
+        var v = UI.formData(e.target);
+        UI.busy(e.target.querySelector('[type=submit]'), UI.api('submit_request', v.title, v.body, null, code)).then(function () {
+          AA.rave('REQUEST SENT', c.key + ' answers within ' + d.promise_days + ' days'); UI.refresh();
+        });
+      };
     });
   });
 })();

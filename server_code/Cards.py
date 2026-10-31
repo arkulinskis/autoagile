@@ -9,6 +9,7 @@ from . import common as C
 from . import Model as M
 from . import Gates
 from . import Metrics
+from . import Alerts
 
 
 # ------------------------------------------------------------------------------------------- helpers
@@ -53,13 +54,22 @@ def sprint_brief(s):
             "cards": len(pts), "committed": s["committed"] or 0}
 
 
-def apply_move(c, status, user=None, agent=None):
-    """Change a card's status and keep its timestamps right (started, review_at, done_at)."""
-    old = c["status"]
+def apply_move(c, status, user=None, agent=None, column=None):
+    """Change a card's status (stage) and keep its timestamps right (started, review_at, done_at).
+    column: a column id inside that stage (None = the stage's first column)."""
+    old, old_col = c["status"], c["column"]
+    who = C.name_of(user) if user is not None else (agent["name"] if agent is not None else "Someone")
     if old == status:
-        return False
+        if column is None or column == old_col:
+            return False
+        cols = M.columns_of(c["team"])
+        before = M.column_name(cols, M.column_of(c, cols))
+        c.update(column=column, moved_at=C.now(), updated=C.now())
+        M.log(c["team"], "move", "%s moved %s: %s -> %s" % (who, M.card_key(c), before, M.column_name(cols, column)),
+              card=c, user=user, agent=agent)
+        return True
     now = C.now()
-    upd = {"status": status, "moved_at": now, "updated": now}
+    upd = {"status": status, "moved_at": now, "updated": now, "column": column}
     if status in ("doing", "review", "done") and c["started"] is None:
         upd["started"] = now
     if status == "review":
@@ -69,7 +79,6 @@ def apply_move(c, status, user=None, agent=None):
     elif c["done_at"] is not None:
         upd["done_at"] = None
     c.update(**upd)
-    who = C.name_of(user) if user is not None else (agent["name"] if agent is not None else "Someone")
     verb = "approved" if (status == "done" and old == "review") else "moved"
     M.log(c["team"], "move", "%s %s %s: %s -> %s" % (who, verb, M.card_key(c), M.STATUS_LABEL.get(old, old), M.STATUS_LABEL[status]),
           card=c, user=user, agent=agent)
@@ -157,8 +166,17 @@ def get_board(team_id):
         else:
             cs.sort(key=lambda c: c["rank"] or 0)
         out[s] = [M.card_dict(c) for c in cs]
+    wip = dict(M.DEFAULT_WIP, **(t["wip"] or {}))
+    board_cols = []
+    custom = M.columns_of(t)
+    for col in custom:
+        same = [x for x in custom if x["stage"] == col["stage"]]
+        ids = [x["id"] for x in same]
+        lim = col["wip"] or (wip.get(col["stage"]) if len(same) == 1 else None)
+        board_cols.append(dict(col, limit=lim, split=len(same) > 1,
+                               cards=[d for d in out[col["stage"]] if (d["column"] if d["column"] in ids else ids[0]) == col["id"]]))
     return {"level": level, "crew": {"id": t.get_id(), "key": t["key"], "name": t["name"], "demo": bool(t["is_demo"])},
-            "wip": dict(M.DEFAULT_WIP, **(t["wip"] or {})), "columns": out, "sprint": sprint_brief(sprint),
+            "wip": wip, "columns": out, "board_columns": board_cols, "sprint": sprint_brief(sprint),
             "people": people(t, me), "epics": epics_list(t), "me": me.get_id()}
 
 
@@ -333,6 +351,7 @@ def update_card(card_id, fields):
         upd["blocked"] = bool(fields["blocked"])
         upd["blocked_reason"] = C.text(fields.get("blocked_reason"), 200) if fields["blocked"] else ""
         notes.append(("flagged it blocked: " + upd["blocked_reason"]) if fields["blocked"] else "cleared the block")
+    newly_blocked = bool(upd.get("blocked")) and not c["blocked"]
     if "points" in fields:
         pts = fields["points"]
         if pts in (None, ""):
@@ -355,19 +374,30 @@ def update_card(card_id, fields):
         c.update(**upd)
         for n in notes:
             M.log(t, "edit", "%s %s" % (C.name_of(me), n), card=c, user=me)
+        if newly_blocked:
+            Alerts.fire(t, "blocked", "blocked:%s:%s" % (c.get_id(), C.iso(C.now())[:13]),
+                        "%s is blocked: %s (%s)" % (M.card_key(c), c["title"], upd["blocked_reason"] or "no reason given"), card=c)
     return C.ok(card=M.card_dict(c, full=True))
 
 
 @anvil.server.callable(require_user=True)
 def move_card(card_id, status, before_id=None):
+    """status: a stage (backlog, ready, doing, review, done) or one of the crew's column ids."""
     c, t, me, role = M.card_access(card_id)
+    column, cols = None, M.columns_of(t)
     if status not in M.STATUSES:
-        return C.fail("Unknown column.")
-    apply_move(c, status, user=me)
+        col = [x for x in cols if x["id"] == status]
+        if not col:
+            return C.fail("Unknown column.")
+        status, column = col[0]["stage"], col[0]["id"]
+    apply_move(c, status, user=me, column=column)
     if before_id is not False:
         set_rank(c, before_id)
     wip = dict(M.DEFAULT_WIP, **(t["wip"] or {}))
     over = status in wip and len(app_tables.cards.search(team=t, status=status)) > wip[status]
+    lim = [x["wip"] for x in cols if x["id"] == column and x["wip"]]
+    if lim:
+        over = over or len([x for x in app_tables.cards.search(team=t, status=status) if M.column_of(x, cols) == column]) > lim[0]
     return C.ok(card=M.card_dict(c), over_wip=over)
 
 
@@ -410,9 +440,40 @@ def delete_card(card_id):
     key = M.card_key(c)
     for e in app_tables.events.search(card=c):
         e.delete()
+    for a in app_tables.alerts.search(card=c):
+        a.delete()
+    for r in app_tables.requests.search(card=c):
+        r["card"] = None
     c.delete()
     M.log(t, "delete", "%s deleted %s" % (C.name_of(me), key), user=me)
     return C.ok()
+
+
+@anvil.server.callable(require_user=True)
+def search_cards(team_id, query):
+    """The command palette: cards whose key or title match, best first (key hits, title starts, then the rest)."""
+    t, me, role = M.access(team_id)
+    q = C.text(query, 80).lower()
+    if not q:
+        return {"cards": []}
+    num = q.lstrip("#").rpartition("-")[2]
+    out = []
+    for c in app_tables.cards.search(team=t):
+        key, title = M.card_key(c).lower(), (c["title"] or "").lower()
+        if key == q or str(c["number"]) == num:
+            score = 0
+        elif title.startswith(q):
+            score = 1
+        elif q in title or q in key or q in (c["source"] or "").lower():
+            score = 2
+        elif all(w in title for w in q.split()):
+            score = 3
+        else:
+            continue
+        out.append((score, c["status"] == "done", -(c["number"] or 0), c))
+    out.sort(key=lambda x: x[:3])
+    return {"cards": [{"key": M.card_key(c), "title": c["title"], "status": c["status"], "type": c["type"] or "story"}
+                      for _, _, _, c in out[:12]]}
 
 
 # ------------------------------------------------------------------------------------------- agent brief

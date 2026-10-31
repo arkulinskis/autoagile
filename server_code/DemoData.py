@@ -6,6 +6,8 @@ Two fictional crews, open to every signed-in person as a sandbox:
        sprint, a planned one, 10 epics across the year, and three AI agents (Claude, Unit 303, 909).
   PIXL (Pixel Bakery, online ordering for a bakery): a young Kanban crew five weeks in, 4 of 6 checks
        towards level 2 (SCRUM).
+NOVA splits Doing into Build and Test columns, and both crews have stakeholder requests (some answered, one
+past the answer promise) and NOVA has a little alert history.
 Demo people have @example.com emails and can't sign in. Every demo row is flagged is_demo=True; removing
 the demo also deletes anything real people added inside the demo crews.
 """
@@ -24,9 +26,11 @@ DEMO_USERS = [
     ("ines", "Ines Ozola", "ines.demo@example.com"),
     ("kofi", "Kofi Mensah", "kofi.demo@example.com"),
     ("lena", "Lena Park", "lena.demo@example.com"),
+    ("sam", "Sam Rivera", "sam.demo@example.com"),
+    ("jo", "Jo Becker", "jo.demo@example.com"),
 ]
 # Children before parents.
-DEMO_TABLES = ["events", "cards", "sprints", "epics", "agents", "members", "teams"]
+DEMO_TABLES = ["alerts", "requests", "events", "cards", "sprints", "epics", "agents", "members", "teams"]
 
 RANGES = {1: (0, 1), 2: (2, 3), 3: (4, 6), 5: (7, 9), 8: (10, 12), 13: (13, 15), 21: (16, 18)}
 SAFE = ["scope", "novelty"]
@@ -162,6 +166,10 @@ def _nova(rng, U, now, today):
                    {"level": 2, "at": C.iso(now - dt.timedelta(days=118)), "by": "Maya Chen", "forced": False},
                    {"level": 3, "at": C.iso(now - dt.timedelta(days=48)), "by": "Theo Martin", "forced": False},
                    {"level": 4, "at": C.iso(now - dt.timedelta(days=8)), "by": "Maya Chen", "forced": False}],
+        columns=[{"id": "ready", "name": "Ready", "stage": "ready", "wip": None}, {"id": "build", "name": "Build", "stage": "doing", "wip": 3},
+                 {"id": "test", "name": "Test", "stage": "doing", "wip": 2}, {"id": "review", "name": "Review", "stage": "review", "wip": None},
+                 {"id": "done", "name": "Done", "stage": "done", "wip": None}],
+        alerts={"webhook": "", "format": "slack", "review_hours": 24}, alerts_checked=now, ask_code="NOVA4ASK", promise_days=14,
         is_demo=True)
     for k, role in (("maya", "owner"), ("theo", "member"), ("ines", "member"), ("kofi", "member")):
         app_tables.members.add_row(team=t, user=U[k], role=role, joined=now - dt.timedelta(days=150), is_demo=True)
@@ -271,7 +279,8 @@ def _nova(rng, U, now, today):
                  started=now - dt.timedelta(hours=30), sprint=act, epic=E["chat"], assignee_agent=u303,
                  body="Mask listed words in chat messages before they are shown. Word lists per language, editable by the station.",
                  acceptance=[{"text": "Masks words from the EN and FR lists", "done": True}, {"text": "Station can add words", "done": False},
-                             {"text": "No false positives on the test corpus", "done": False}], moved_at=now - dt.timedelta(hours=30))
+                             {"text": "No false positives on the test corpus", "done": False}], moved_at=now - dt.timedelta(hours=30),
+                 column="test")
     cur.append(prof)
     cur.append(b.add("Dashboard: live listener graph", 8, "doing", created=d0 - dt.timedelta(days=12), started=now - dt.timedelta(days=3, hours=2),
                      sprint=act, epic=E["dash"], assignee_user=U["maya"], priority=1,
@@ -333,6 +342,30 @@ def _nova(rng, U, now, today):
                   body="14 events are sent but no dashboard reads them. Removing them saves 9 KB and some listener data.")
     prop1["by"] = prop2["by"] = None
     b.write()
+    _requests(t, U, now, b, [
+        ("Let listeners tip the show host", "Our hosts would love a tip jar during live shows.", "sam", 17, 6, "open", "", None),
+        ("Show the live listener count on the station page", "Listeners like seeing they're not alone.", "sam", 3, 9, "open", "", None),
+        ("Translate the app into Spanish", "Half our audience in Miami listens in Spanish.", "jo", 6, 3, "open", "", None),
+        ("Import our podcast feed", "We publish every show as a podcast already. Can Nova pick them up?", "sam", 25, 14, "accepted",
+         "Yes: it's the Podcast import epic, planned for next quarter.", "Import podcasts from an RSS feed"),
+        ("Dark mode for the station dashboard", "We run the dashboard on a studio screen all night.", "jo", 20, 5, "accepted",
+         "Good one. An agent can take it once it's groomed.", "Dark mode for the station dashboard"),
+        ("Emoji picker hides the play button on my phone", "Can't pause the stream while picking an emoji.", "jo", 12, 4, "accepted",
+         "Fixed in Sprint 9.", "Fix emoji picker covering the play button"),
+        ("A Windows desktop app", "Some of our older listeners don't use browsers much.", "sam", 30, 2, "declined",
+         "Not this year: the web player works on Windows, and we're a crew of four. We'll look again after the web player redesign.", None),
+        ("Chromecast support", "Cast the stream to the living-room TV.", "jo", 40, 7, "later",
+         "Depends on the smart speaker spike. Back on the table in two quarters.", None),
+    ])
+    for kind, card, hours, text in [("submitted", mute, 27, "Claude handed in %s for review: Moderator can mute a listener"),
+                                    ("blocked", push, 40, "%s is blocked: Push notification when a show goes live (Waiting for the Apple push certificate)"),
+                                    ("review_wait", mute, 3, "%s has waited 24 hours for review: Moderator can mute a listener (work by Claude)")]:
+        r = card["row"]
+        key = {"submitted": "submitted:%s:%s" % (r.get_id(), C.iso(r["review_at"])),
+               "review_wait": "review_wait:%s:%s" % (r.get_id(), C.iso(r["review_at"])),
+               "blocked": "blocked:demo:%s" % r.get_id()}[kind]
+        app_tables.alerts.add_row(team=t, kind=kind, dedupe=key, card=r, text=text % M.card_key(r), created=now - dt.timedelta(hours=hours),
+                                  sent={"skipped": "demo crew"}, is_demo=True)
 
     ev = []
 
@@ -390,7 +423,7 @@ def _pixl(rng, U, now, today):
         level=1, join_code=None, owner=U["lena"], created=now - dt.timedelta(days=38), next_number=1, sprint_days=14,
         wip={"ready": 6, "doing": 3, "review": 2}, dod=["Works on a phone", "The bakers tried it", "Merged to main"],
         agent_rules=M.DEFAULT_AGENT_RULES, level_log=[{"level": 1, "at": C.iso(now - dt.timedelta(days=38)), "by": "Lena Park", "forced": False}],
-        is_demo=True)
+        ask_code="PIXL4ASK", promise_days=14, alerts_checked=now, is_demo=True)
     for k, role in (("lena", "owner"), ("kofi", "member")):
         app_tables.members.add_row(team=t, user=U[k], role=role, joined=now - dt.timedelta(days=38), is_demo=True)
     claude = app_tables.agents.add_row(team=t, name="Claude", kind="Claude Code", color="#ff7a1a", max_wip=1, token_hash=None, token_hint="",
@@ -430,6 +463,10 @@ def _pixl(rng, U, now, today):
         b.add(title, rng.choice([None, None, 3, 5, 8]), "backlog", created=now - dt.timedelta(days=20 - i), priority=rng.choice([2, 3]),
               by=U["lena"])
     b.write()
+    _requests(t, U, now, b, [
+        ("Let me reorder my usual", "Same sourdough and two croissants every Saturday. One button, please.", "jo", 16, 7, "open", "", None),
+        ("Oat-milk options in the order form", "For the coffee add-on.", "sam", 2, 4, "open", "", None),
+    ])
     M.log(t, "crew", "Lena Park started the crew at level 1 (KANBAN).", user=U["lena"], when=now - dt.timedelta(days=38), demo=True)
     for spec in b.specs:
         r = spec["row"]
@@ -440,6 +477,21 @@ def _pixl(rng, U, now, today):
         elif r["status"] == "done" and r["assignee_agent"] is not None:
             M.log(t, "submit", "Done and tested on a phone.", card=r, agent=claude, when=r["review_at"], demo=True)
     return t
+
+
+def _requests(t, U, now, b, specs):
+    """Stakeholder requests: (title, body, who, days ago, votes, status, answer, title of the card it became)."""
+    real = [u.get_id() for u in U.values()]
+    for title, body, who, days, votes, status, answer, card_title in specs:
+        card = None
+        if card_title:
+            card = [x["row"] for x in b.specs if x["title"] == card_title][0]
+            card["labels"] = list(card["labels"] or []) + ["request"]
+        created = now - dt.timedelta(days=days, hours=3)
+        app_tables.requests.add_row(team=t, title=title, body=body, by_user=U[who], votes=real[:votes] + ["demo-voter-%d" % i for i in range(max(0, votes - len(real)))], status=status,
+                                    answer=answer, answered_at=created + dt.timedelta(days=min(days - 1, 4)) if status != "open" else None,
+                                    answered_by=U["maya"] if t["key"] == "NOVA" and status != "open" else None, card=card,
+                                    created=created, is_demo=True)
 
 
 def remove(remember=True):

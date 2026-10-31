@@ -8,11 +8,14 @@ from . import Model as M
 from . import Metrics
 from . import Cards
 from . import Sprints
+from . import Alerts
+from . import Requests
 
 
 @anvil.server.callable(require_user=True)
 def get_deck(team_id):
     t, me, role = M.access(team_id)
+    Alerts.sweep(t)
     level = t["level"] or 1
     cards = list(app_tables.cards.search(team=t))
     wip = dict(M.DEFAULT_WIP, **(t["wip"] or {}))
@@ -55,6 +58,11 @@ def get_deck(team_id):
             alerts.append({"level": "warn", "text": "%s ends in %d day%s." % (sprint["name"], left, "" if left == 1 else "s"), "go": "plan"})
     elif level >= 2:
         alerts.append({"level": "info", "text": "No sprint is running. Plan one from the backlog.", "go": "backlog"})
+    reqs = [r for r in app_tables.requests.search(team=t, status="open")]
+    late = [r for r in reqs if r["created"] is not None and (C.now() - r["created"]).days > Requests.promise(t)]
+    if late:
+        alerts.append({"level": "warn", "text": "%d request%s waited past your %d-day answer promise. Answer them: yes, later or no." %
+                       (len(late), "" if len(late) == 1 else "s", Requests.promise(t)), "go": "requests"})
     mat = Metrics.maturity(t)
     if mat["next"] and mat["next"]["eligible"]:
         alerts.insert(0, {"level": "good", "text": "Your crew is ready for level %d: %s. Level up on the Plan page." %
@@ -75,4 +83,6 @@ def get_deck(team_id):
             "mine": [M.card_dict(c) for c in mine[:12]], "review": [M.card_dict(c) for c in review[:12]],
             "blocked": [M.card_dict(c) for c in blocked[:8]], "alerts": alerts, "agents": agents,
             "feed": [M.event_dict(e) for e in feed[:16]], "ticker": ticker,
+            "requests": {"open": len(reqs), "late": len(late), "promise": Requests.promise(t),
+                         "top": [Requests.request_dict(r, me) for r in sorted(reqs, key=lambda r: -len(r["votes"] or []))[:3]]},
             "sprint": dict(Cards.sprint_brief(sprint), burndown=Sprints.burndown(sprint)) if sprint is not None else None}

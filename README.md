@@ -3,7 +3,9 @@
 An agile work board in the spirit of Jira, monday.com, Asana and Podio, built for **crews of humans and AI software
 developers**. Young crews start in Kanban; their own data unlocks Scrum sprints, then a 3-month forecast, then a year
 roadmap. Story points come from **complexity gates** (six questions) instead of guesswork, and AI agents work the board
-through an HTTP API: pull the next card, claim, log, tick criteria, hand in for human review. 90s techno look.
+through an HTTP API: pull the next card, claim, log, tick criteria, hand in for human review. d3 reports forecast
+when work lands; requests from outside the crew always get an answer; Jira and Trello history imports with its dates,
+and everything exports any time. 90s techno look.
 Built on [Anvil](https://anvil.works).
 
 - **App repo:** github.com/arkulinskis/autoagile (branch `master`). Anvil pulls `master`.
@@ -25,11 +27,19 @@ Review vs WIP), a scrolling agent ticker, "Needs a human" (Review + blocked), yo
 reviews waiting over a day, unestimated Ready cards, sprint ending/over, level-up available), the maturity meter, the
 sprint burndown, agents with live state, and the live feed.
 
-**Board** (`#board`): Ready / Doing / Review / Done; at level 1 the Kanban flow, from level 2 the running sprint (with
-its goal). Drag and drop between columns and within them; WIP limits glow red and ask before you break them; filters
-(All / Mine / Humans / Agents) and search; aging on Doing/Review cards; blocked cards striped; phones show one column at a time.
+**Board** (`#board`): the crew's columns. Every column belongs to one of four stages (Ready, Doing, Review, Done); Crew
+settings can split a stage into several columns (NOVA: Doing -> Build + Test), each with its own WIP limit. At level 1 the
+Kanban flow, from level 2 the running sprint (with its goal). Drag and drop between columns and within them; WIP limits glow
+red and ask before you break them; **swimlanes** by person, epic, priority or type (dropping a card in another lane
+re-assigns it); filters (All / Mine / Humans / Agents) and the **filter language** (`@name #bug-or-label !1 ~5 >3 <8 +epic
+is:blocked is:agent is:human is:mine is:unestimated is:ready`, plus words); aging on Doing/Review cards; blocked cards
+striped; phones show one column at a time.
 
-**Backlog** (`#backlog`): a tracker-style ranked list (top / up / down), filters (unestimated, agent-ready, bugs), quick
+**Command palette**: Ctrl K (or `/` when not typing) jumps to any page or card, or adds a card with the quick-add syntax.
+`g` + a letter jumps too (`g b` board, `g l` backlog, `g r` reports, `g q` requests...).
+
+**Backlog** (`#backlog`): a tracker-style ranked list (top / up / down), filters (unestimated, agent-ready, bugs, and the
+filter language), quick
 add with a syntax: `#bug` type, `!1` priority, `~5` points by hand, `@name` assign a person or agent, `+epic`, other
 `#words` become labels. From level 2: sprint planning panels (capacity bar against average velocity, add/remove cards,
 plan up to 3 sprints, start a sprint). **Estimation Party** (`#backlog/party`): every unestimated card through the gates,
@@ -67,9 +77,36 @@ the HTTP API reference with curl examples, a CLAUDE.md snippet, and the agent fe
 `card`, `claim`, `log`, `check`, `submit`, `release`, `propose`, plus `manifest` (no token). Agents respect their own WIP
 limit and the crew's Doing limit (409), paused agents get 423, bad tokens 401. Agents never move cards to Done.
 
-**Insights** (`#insights`): throughput (12 weeks), cycle-time scatter with 50th/85th percentiles (humans vs agents),
-cumulative flow, velocity, gate accuracy (median days per points value), agents vs humans (points, review wait), aging
-WIP. Every chart has hover tooltips and a table view.
+**Reports** (`#reports/<tab>`, drawn with d3 v7.9.0, self-hosted in `assets/`): **burn-up** (crew, a sprint or an epic;
+cards or points; a forecast cone from the 15th/50th/85th percentile weeks), **forecast** (Monte Carlo, 5,000 runs of the
+real weekly throughput: "when will these N cards be done?" with 50/85/95% dates, and "how many by this date?"), **flow**
+(cumulative flow by stage with a brush strip to zoom, Little's law read-out), **cycle time** (control chart, humans vs
+agents, 50th/85th lines, rolling average, Shift+scroll zoom, click a dot to open the card), **epic map** (treemap: cards
+sized by points, coloured by stage), **work mix** (finished per week by type or by humans/agents). Range 4/12/26 weeks or
+all; every chart has tooltips, a table view, CSV download and Print.
+
+**Insights** (`#insights`, linked from Reports): throughput (12 weeks), cycle-time scatter with 50th/85th percentiles
+(humans vs agents), cumulative flow, velocity, gate accuracy (median days per points value), agents vs humans (points,
+review wait), aging WIP. Every chart has hover tooltips and a table view.
+
+**Requests** (`#requests`, and `#ask/<code>` for people outside the crew): a share link lets anyone signed in add requests
+and vote; they see the requests and the answers, never the board. The crew promises an answer within 7, 14 or 30 days:
+Accept (becomes a backlog card labelled `request`; the requester sees it move to Shipped), Later or Decline (both need a
+reason). Overdue requests show on the Deck and raise an alert. Stats: open, overdue, median days to answer, answered on
+time, shipped.
+
+**Alerts** (Crew settings): one webhook (Slack, Teams, Mattermost and Discord, or JSON for anything else), set by the owner,
+and an email digest each member can switch on for themselves. Kinds: an agent hands in work, work waits in Review longer
+than N hours (24 by default), a card is blocked, a column goes over its WIP limit, a sprint ends tomorrow or is overdue, a
+request passes the answer promise. Each condition is announced once (dedupe key), checked when someone opens the Deck or an
+agent uses the API (at most every 10 minutes per crew). Demo crews keep a history and never send.
+
+**Import and export** (`#import`): reads a Jira CSV (several Labels and Comment columns, Jira dates, epics by Parent summary
+or Epic Link, story points), a Trello board JSON, any CSV (fields guessed, all editable), or an AutoAgile export. Map
+statuses to columns, preview, import in batches of 200. Dates are kept, so throughput, cycle times and level checks count
+the past. Cards remember their source key, so importing twice skips duplicates; people are matched by email or name.
+Export: everything as JSON (cards with comments, epics, sprints and retros, requests, settings) or the cards as a CSV with
+Jira-style column names.
 
 **For admins** (`#admin`; arkulinskis@gmail.com becomes an admin on first sign-in): feedback inbox, users, **Crews**
 (every crew with owner and size; delete a real crew for abuse), demo data (remove / reload both demo crews).
@@ -77,7 +114,8 @@ WIP. Every chart has hover tooltips and a table view.
 ## Setting it up in Anvil (once)
 
 1. In the Anvil editor: **Create app → Clone from GitHub**, and paste `https://github.com/arkulinskis/autoagile`.
-2. **Users** service: email + password, sign-up allowed (already set in `anvil.yaml`; check it).
+2. **Users** service: email + password, sign-up allowed (already set in `anvil.yaml`; check it). **Email** service: on
+   (anvil.yaml adds it; alert digests use it).
 3. Open the app in the editor. If it shows a **Schema Mismatch** alert, choose **"The schema of the source code is correct"** so Anvil creates the tables.
 4. **Run** it and sign up with **arkulinskis@gmail.com** straight away (that account becomes the admin).
 5. **Publish** (Publish → public URL, or your own domain).
@@ -97,10 +135,12 @@ python tools/deploy.py --push "Message"          # deploy: commit + push to GitH
 
 ```
 web/            the interface: core.js/core.css (engine + techno design tokens), app.js (header with crew chip, footer), pages/*.html
-                pages/_aa.html is the shared kit (window.AA): crews, card chips, gates widget, LCDs, windows, charts, rave
+                pages/_aa.html is the shared kit (window.AA): crews, card chips, gates widget, LCDs, windows, charts, rave,
+                d3 loader, CSV in/out, the filter language, the command palette
 client_code/    Main.py (the only Anvil form: bridge to the server, sign-in), legal.py
-server_code/    Gates (points rules), Model (access + dicts), Teams, Cards, Sprints, Plans, Metrics, Agents (+ HTTP API), Deck,
-                DemoData, Admin, Accounts, Feedback, common, legal_server
-assets/         icon.svg (three rising bars: columns, levels, an equaliser) + generated PNG icons
+server_code/    Gates (points rules), Model (access + dicts + board columns), Teams, Cards, Sprints, Plans, Metrics, Agents
+                (+ HTTP API), Deck, Reports, Requests, Alerts, Transfer (import/export), DemoData, Admin, Accounts, Feedback,
+                common, legal_server
+assets/         icon.svg (three rising bars: columns, levels, an equaliser) + generated PNG icons, d3.v7.9.0.min.js
 tools/          sync_to_anvil.py (settings + table schema), deploy.py, check.py, preview/ (dev server, UI tests, screenshots), testing/
 ```

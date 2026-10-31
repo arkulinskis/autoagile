@@ -29,6 +29,7 @@ from . import common as C
 from . import Model as M
 from . import Gates
 from . import Cards
+from . import Alerts
 
 KINDS = ["Claude Code", "Codex", "Cursor agent", "Copilot agent", "Devin", "Custom agent"]
 OPS = {"whoami": "GET", "next": "GET", "cards": "GET", "card": "GET", "claim": "POST", "log": "POST", "check": "POST",
@@ -205,6 +206,7 @@ def agent_op(a, op, data=None, base=None):
                 "ops": {k: DOCS[k] for k in OPS}}
     if not a["active"]:
         return _err("%s is paused by the crew. Ask a human to resume it." % a["name"], 423)
+    Alerts.sweep(t)
     if op == "next":
         c = _next(a)
         if c is None:
@@ -281,6 +283,8 @@ def agent_op(a, op, data=None, base=None):
         c.update(links=links, updated=C.now())
         Cards.apply_move(c, "review", agent=a)
         M.log(t, "submit", summary, card=c, agent=a)
+        Alerts.fire(t, "submitted", "submitted:%s:%s" % (c.get_id(), C.iso(c["review_at"])),
+                    "%s handed in %s for review: %s" % (a["name"], key, c["title"]), card=c)
         open_acc = len([x for x in (c["acceptance"] or []) if not x.get("done")])
         return {"ok": True, "message": "%s is in Review. A human approves it." % key,
                 "warning": ("%d acceptance criteria are still unticked." % open_acc) if open_acc else None}

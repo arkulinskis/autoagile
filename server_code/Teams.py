@@ -113,7 +113,8 @@ def crew_dict(t, me, role):
             "join_code": t["join_code"] if role in ("owner", "member") else None,
             "sprint_days": t["sprint_days"] or 14, "wip": dict(M.DEFAULT_WIP, **(t["wip"] or {})), "dod": t["dod"] or [],
             "agent_rules": t["agent_rules"] or "", "members": members, "agents": agents,
-            "level_log": t["level_log"] or [], "created": C.iso(t["created"])}
+            "level_log": t["level_log"] or [], "created": C.iso(t["created"]), "columns": M.columns_of(t),
+            "promise_days": t["promise_days"] or 14}
 
 
 @anvil.server.callable(require_user=True)
@@ -161,9 +162,51 @@ def update_crew(team_id, fields):
         changes["dod"] = items[:12]
     if "agent_rules" in fields:
         changes["agent_rules"] = C.text(fields["agent_rules"], 3000, multiline=True)
+    if "promise_days" in fields:
+        try:
+            pd = int(fields["promise_days"])
+        except (TypeError, ValueError):
+            return C.fail("The answer promise is 7, 14 or 30 days.")
+        if pd not in (7, 14, 30):
+            return C.fail("The answer promise is 7, 14 or 30 days.")
+        changes["promise_days"] = pd
     if changes:
         t.update(**changes)
     return C.ok(crew=crew_dict(t, me, role))
+
+
+@anvil.server.callable(require_user=True)
+def save_columns(team_id, columns):
+    """The board's columns. Each belongs to a stage (ready, doing, review, done); a stage can have several
+    (Doing -> Build, Test) with their own WIP limits. Cards in a removed column go to their stage's first column."""
+    t, me, role = M.access(team_id)
+    if not isinstance(columns, list) or not columns:
+        return C.fail("Send the list of columns.")
+    if len(columns) > M.MAX_COLUMNS:
+        return C.fail("A board can have up to %d columns." % M.MAX_COLUMNS)
+    incoming = []
+    for c in columns:
+        if not isinstance(c, dict):
+            continue
+        name = C.text(c.get("name"), 20)
+        if not name:
+            return C.fail("Every column needs a name.")
+        cid = str(c.get("id") or "")
+        if not re.match(r"^[a-z0-9_]{1,24}$", cid):
+            cid = "c" + "".join(random.choice("abcdefghjkmnpqrstuvwxyz23456789") for _ in range(6))
+        incoming.append(dict(c, id=cid, name=name))
+    for st in M.BOARD:
+        if not any(c.get("stage") == st for c in incoming):
+            return C.fail("Keep at least one %s column: agents, levels and reports rely on it." % M.STATUS_LABEL[st])
+    cols = M.clean_columns(incoming)
+    ids = set(c["id"] for c in cols)
+    for card in app_tables.cards.search(team=t):
+        if card["column"] and card["column"] not in ids:
+            card["column"] = None
+    t["columns"] = cols
+    M.log(t, "crew", "%s changed the board columns: %s." % (C.name_of(me), ", ".join(c["name"] for c in cols)), user=me,
+          demo=bool(t["is_demo"]))
+    return C.ok(columns=cols)
 
 
 @anvil.server.callable(require_user=True)
