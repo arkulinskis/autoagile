@@ -2659,16 +2659,23 @@
     floors: { '2': 3, '3': 5 }, split_at: 13 };
 
   function heroArt() {
-    var c = function (t, type, pts, who, ec) {
-      return '<div class="lp-hc" style="--ec:' + ec + '">' + t + '<div class="r">' + AA.type(type) + '<span class="ui-spacer"></span>' + who + AA.pts(pts) + '</div></div>';
+    var c = function (t, type, pts, who, ec, cls) {
+      return '<div class="lp-hc ' + (cls || '') + '" style="--ec:' + ec + '">' + t + '<div class="r">' + AA.type(type) + '<span class="ui-spacer"></span>' + who + AA.pts(pts) + '</div>' +
+        (cls === 'slot' ? '<span class="st"></span>' : '') + '</div>';
     };
     var bot = function (col) { return AA.who({ kind: 'agent', name: 'Agent', color: col }); };
     var hu = function (n) { return AA.who({ kind: 'user', name: n }); };
-    return '<div class="lp-hart" aria-hidden="true"><div class="lp-hsmile">' + AA.smiley(78) + '</div>' +
-      AA.win('NOVA // Sprint 9', '<div class="lp-hcols"><div class="lp-hcol"><i>READY</i>' + c('Pin a message in chat', 'story', 2, bot('#ff7a1a'), '#ff2bd6') + c('Keyboard shortcuts', 'story', 2, hu('Ines Ozola'), '#ffd60a') + '</div>' +
-        '<div class="lp-hcol"><i>DOING 3/5</i>' + c('Profanity filter EN/FR', 'story', 3, bot('#b4ff1f'), '#ff2bd6') + c('Live listener graph', 'story', 8, hu('Maya Chen'), '#00e5ff') + '</div>' +
-        '<div class="lp-hcol c3"><i>REVIEW</i>' + c('Mute a listener', 'story', 5, bot('#ff7a1a'), '#ff2bd6') + c('Emoji picker overlap', 'bug', 2, hu('Theo Martin'), '#ff2bd6') + '</div></div>', { extra: 'LVL 4' }) +
-      '<div class="lp-hlcd">' + AA.lcd('32<small>pts</small>', 'Velocity, steady') + '</div></div>';
+    var mover = '<div class="lp-hc lp-mover" style="--ec:#b4ff1f">Profanity filter EN/FR<div class="r">' + AA.type('story') + '<span class="ui-spacer"></span>' + bot('#b4ff1f') + AA.pts(3) + '</div>' +
+      '<span class="st"><b>&gt; ready</b><b>&gt; working…</b><b>&gt; in review</b><b>&gt; done ✓</b></span></div>';
+    var board = '<div class="lp-hcols">' +
+      '<div class="lp-hcol"><i>READY</i>' + c('slot', 'story', 3, '', '', 'slot') + c('Pin a message in chat', 'story', 2, bot('#ff7a1a'), '#ff2bd6') + c('Keyboard shortcuts', 'story', 2, hu('Ines Ozola'), '#ffd60a') + '</div>' +
+      '<div class="lp-hcol"><i>DOING 3/5</i>' + c('slot', 'story', 3, '', '', 'slot') + c('Live listener graph', 'story', 8, hu('Maya Chen'), '#00e5ff') + '</div>' +
+      '<div class="lp-hcol"><i>REVIEW</i>' + c('slot', 'story', 3, '', '', 'slot') + c('Emoji picker overlap', 'bug', 2, hu('Theo Martin'), '#ff2bd6') + '</div>' +
+      '<div class="lp-hcol"><i>DONE</i>' + c('slot', 'story', 3, '', '', 'slot') + c('Mute a listener', 'story', 5, bot('#ff7a1a'), '#ff2bd6') + '</div>' + mover + '</div>';
+    var log = '<div class="lp-log"><span class="hd">AGENT nova-7 // API LOG</span>' +
+      '<p><i>POST</i> /cards/41/pull</p><p><u>200</u> card is yours: 3 pts</p><p><i>POST</i> /cards/41/log "filter + tests"</p>' +
+      '<p><i>POST</i> /cards/41/handoff</p><p><u>→</u> Maya Chen to review</p><p><u>✓</u> approved · velocity +3</p></div>';
+    return '<div class="lp-hart" aria-hidden="true">' + AA.win('NOVA // Sprint 9', board, { extra: 'LVL 4' }) + log + '</div>';
   }
 
   UI.page('landing', { title: 'Welcome' }, function (view, ctx) {
@@ -2677,11 +2684,12 @@
       : '<a class="ui-btn primary lg" href="#auth/signup" data-go="auth/signup">' + esc(C.cta) + ' ' + UI.icon('arrow') + '</a>' +
         '<a class="ui-btn lg" href="#auth" data-go="auth">I have an account</a>';
     view.innerHTML =
-      '<section class="lp-hero"><div class="ui-wrap"><div>' +
-        '<div class="eyebrow">' + esc(C.eyebrow) + '</div><h1>' + C.title + '</h1><p class="lp-lead">' + esc(C.lead) + '</p>' +
+      '<section class="lp-hero"><div class="ui-wrap"><div class="lp-top">' +
+        '<div><div class="eyebrow">' + esc(C.eyebrow) + '</div><h1>' + C.title + '</h1></div>' +
+        '<div><p class="lp-lead">' + esc(C.lead) + '</p>' +
         '<div class="lp-cta">' + primary + '</div>' +
         '<div class="lp-proof">' + C.proof.map(function (p) { return '<span><span class="aa-led on"></span>' + esc(p) + '</span>'; }).join('') + '</div>' +
-      '</div>' + heroArt() + '</div></section>' +
+      '</div></div>' + heroArt() + '</div></section>' +
       '<div class="aa-checker"></div>' +
       '<section class="lp-section" id="levels"><div class="ui-wrap"><div class="lp-head"><div class="eyebrow">The ladder</div><h2>Four levels. Your data unlocks each one.</h2>' +
         '<p>Young crews don\'t promise sprints or roadmaps on day one. They earn them, and AutoAgile checks the numbers for you.</p></div>' +
