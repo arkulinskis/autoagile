@@ -874,9 +874,9 @@ native_deps:
 
     <!-- Prepsto feedback panel: every "Submit feedback" link and button opens it (it is the only feedback channel). No floating button, no cookies, nothing loads until it is opened. Codes: APP_MAKER/prepsto-links.json -->
     <script src="https://prepsto.com/_/theme/widget.js" data-prepsto="xybae8y" data-button="false" data-label="Submit feedback" async></script>
-    <link rel="stylesheet" href="_/theme/icons.css?v=8f508d76cd">
-    <link rel="stylesheet" href="_/theme/app.css?v=3ca13a07d8">
-    <script src="_/theme/app-kit.js?v=1dd84c0eca"></script>
+    <link rel="stylesheet" href="_/theme/icons.css?v=18a24fd83d">
+    <link rel="stylesheet" href="_/theme/app.css?v=0a06f11072">
+    <script src="_/theme/app-kit.js?v=9436b45590"></script>
     <script src="_/theme/aa-engine.js?v=a547281ef2"></script>
 package_name: AutoAgile
 runtime_options:

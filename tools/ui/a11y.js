@@ -10,7 +10,7 @@
 (async function () {
   /*AXE*/
   const PUBLIC = ['#landing', '#auth', '#auth/signup'];  // add the app's public pages
-  const MEMBER = ['#home', '#profile'];                  // add every member page
+  const MEMBER = ['#deck', '#board', '#backlog', '#plan', '#agents', '#insights', '#reports', '#requests', '#import', '#crew', '#profile'];                  // add every member page
   const log = [], bad = [];
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   async function until(fn, what, ms) {
@@ -100,7 +100,7 @@
     type(inputs[0], 'Access Tester'); type(inputs[1], 'a11y' + Date.now() + '@example.com'); type(inputs[2], 'Hb-' + Math.random().toString(36).slice(2) + '-Kq7');
     const box = $('.au-card input[type=checkbox]'); if (box && !box.checked) box.click();
     $$('.anvil-role-btn-block button').find((b) => /Create account/.test(b.textContent)).click();
-    await until(() => location.hash === '#home' && window.UI_READY, 'signed in', 30000);
+    await until(() => location.hash === '#deck' && window.UI_READY, 'signed in', 30000);
     for (const h of MEMBER) await scan(h);
     log.push(bad.length ? 'PROBLEMS: ' + bad.join(' | ') : 'PASSED');
     return { ok: !bad.length, log: log };

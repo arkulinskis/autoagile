@@ -11,7 +11,7 @@
    Resolves to {ok, log}. Keep log lines ASCII (the Windows console). */
 (async function () {
   const PUBLIC = ['#landing', '#auth/signup'];  // add the app's public pages
-  const MEMBER = ['#home', '#profile'];         // add every member page
+  const MEMBER = ['#deck', '#board', '#backlog', '#plan', '#agents', '#insights', '#reports', '#requests', '#import', '#crew', '#profile'];         // add every member page
   const OVERUSED = ['inter', 'roboto', 'plus jakarta sans', 'geist', 'space grotesk', 'fraunces'];
   const phone = window.innerWidth < 600;
   const log = [], bad = [];
@@ -147,7 +147,7 @@
     type(inputs[0], 'Design Tester'); type(inputs[1], 'design' + Date.now() + '@example.com'); type(inputs[2], 'Hb-' + Math.random().toString(36).slice(2) + '-Kq7');
     const box = $('.au-card input[type=checkbox]'); if (box && !box.checked) box.click();
     $$('.anvil-role-btn-block button').find((b) => /Create account/.test(b.textContent)).click();
-    await until(() => location.hash === '#home' && window.UI_READY, 'signed in', 30000);
+    await until(() => location.hash === '#deck' && window.UI_READY, 'signed in', 30000);
     for (const h of MEMBER) { await page(h); scan(h + ' ' + w); }
     log.push((bad.length ? 'PROBLEMS: ' + bad.join(' | ') : 'PASSED') + ' (' + warns + ' warnings to fix or explain)');
     return { ok: !bad.length, log: log };

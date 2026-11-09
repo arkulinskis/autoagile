@@ -108,7 +108,7 @@ class Card(CardTemplate):
         if c.get("done_at"):
             facts.append("Done  " + state.date_time(c["done_at"]))
         if c.get("age") is not None and c["status"] != "done":
-            facts.append("In column  " + ("%d hours" % round(c["age"] * 24) if c["age"] < 1 else "%s days" % c["age"]))
+            facts.append("In column  " + ("%d hours" % round(c["age"] * 24) if c["age"] < 1 else "%g days" % round(c["age"], 1)))
         self.facts.text = "\n".join(facts)
         # details
         a = c.get("assignee")

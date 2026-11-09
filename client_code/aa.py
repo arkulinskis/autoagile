@@ -118,7 +118,7 @@ def plural(n, one, many=None):
 
 
 # ---------------------------------------------------------------- complexity gates (mirror of server_code/Gates.py)
-GATES_CFG: dict = {
+GATES_CFG = {
     "gates": [
         {"id": "scope", "name": "Scope", "q": "How much of the system does it touch?",
          "opts": ["One file or setting", "One module", "Several modules", "Across services or teams"]},
@@ -141,8 +141,13 @@ GATES_CFG: dict = {
 }
 
 
+def loose(x):
+    """Hands a value on untyped (the validator can't follow dicts of mixed values; Skulpt has no typing)."""
+    return x
+
+
 def gate_score(answers, cfg=None):
-    cfg: dict = cfg or GATES_CFG
+    cfg = loose(cfg or GATES_CFG)
     a = {}
     for g in cfg["gates"]:
         v = (answers or {}).get(g["id"])
