@@ -87,12 +87,12 @@ class Party(PartyTemplate):
         tag = str(getattr(e.target, "tagName", "") or "")
         if tag in ("INPUT", "TEXTAREA", "SELECT") or window.document.querySelector(".anvil-modal.in, .modal.in"):
             return
-        if e.key in ("1", "2", "3", "4"):
-            self.gates.key(int(e.key))
+        if getattr(e, "key", None) in ("1", "2", "3", "4"):
+            self.gates.key(int(getattr(e, "key", None)))
             e.preventDefault()
-        elif e.key == "Enter" and tag != "BUTTON" and tag != "A":
+        elif getattr(e, "key", None) == "Enter" and tag != "BUTTON" and tag != "A":
             e.preventDefault()
             self._save()
-        elif e.key in ("s", "S"):
+        elif getattr(e, "key", None) in ("s", "S"):
             self.i += 1
             self._show()

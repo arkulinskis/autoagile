@@ -70,15 +70,15 @@ class Palette(PaletteTemplate):
             self._build(r.get("cards") or [])
 
     def _keydown(self, e):
-        if e.key == "ArrowDown":
+        if getattr(e, "key", None) == "ArrowDown":
             e.preventDefault()
             self.sel = min(len(self.items_now) - 1, self.sel + 1)
             self._draw()
-        elif e.key == "ArrowUp":
+        elif getattr(e, "key", None) == "ArrowUp":
             e.preventDefault()
             self.sel = max(0, self.sel - 1)
             self._draw()
-        elif e.key == "Enter":
+        elif getattr(e, "key", None) == "Enter":
             e.preventDefault()
             self._run_index(self.sel)
 

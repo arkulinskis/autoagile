@@ -123,11 +123,11 @@ class Agents(AgentsTemplate):
         self.cmd.focus()
 
     def _cmd_key(self, e):
-        if e.key == "ArrowUp" and self.hist:
+        if getattr(e, "key", None) == "ArrowUp" and self.hist:
             self.hi = min(len(self.hist) - 1, self.hi + 1)
             self.cmd.text = self.hist[self.hi]
             e.preventDefault()
-        elif e.key == "ArrowDown":
+        elif getattr(e, "key", None) == "ArrowDown":
             self.hi = max(-1, self.hi - 1)
             self.cmd.text = "" if self.hi < 0 else self.hist[self.hi]
             e.preventDefault()

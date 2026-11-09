@@ -80,20 +80,20 @@ class Shell(ShellTemplate):
             self.menu.visible = False
 
     def _key(self, event):
-        if event.key == "Escape":
+        if getattr(event, "key", None) == "Escape":
             self.menu.visible = False
         if not state.me():
             return
         target = event.target
         tag = str(getattr(target, "tagName", "") or "")
         typing = tag in ("INPUT", "TEXTAREA", "SELECT") or bool(getattr(target, "isContentEditable", False))
-        if (event.ctrlKey or event.metaKey) and str(event.key).lower() == "k":
+        if (getattr(event, "ctrlKey", False) or getattr(event, "metaKey", False)) and str(getattr(event, "key", None)).lower() == "k":
             event.preventDefault()
             open_palette()
             return
-        if typing or event.ctrlKey or event.metaKey or event.altKey or window.document.querySelector(".anvil-modal.in, .modal.in"):
+        if typing or getattr(event, "ctrlKey", False) or getattr(event, "metaKey", False) or getattr(event, "altKey", False) or window.document.querySelector(".anvil-modal.in, .modal.in"):
             return
-        if event.key == "/":
+        if getattr(event, "key", None) == "/":
             event.preventDefault()
             open_palette()
             return
@@ -101,11 +101,11 @@ class Shell(ShellTemplate):
         if self._chord and now - self._chord < 900:
             self._chord = 0
             for addr, label, icon, chord in GO:
-                if chord == "g " + str(event.key).lower():
+                if chord == "g " + str(getattr(event, "key", None)).lower():
                     event.preventDefault()
                     router.go(*addr.split("/"))
             return
-        if event.key == "g":
+        if getattr(event, "key", None) == "g":
             self._chord = now
 
     @handle("", "show")
