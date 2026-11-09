@@ -1,0 +1,16 @@
+<div class="ui">
+  <anvil-component type="Label" name="title" prop:role='["dlg-title"]'></anvil-component>
+  <anvil-component type="Label" name="intro" prop:text="It joins the crew like a person: it can be assigned cards, it has a WIP limit, and everything it does shows on the cards." prop:role='["fine-print"]'></anvil-component>
+  <div class="ui-stack">
+    <label class="ui-field"><span>Name</span><anvil-component type="TextBox" name="name_box" prop:placeholder="Claude, Unit 303, Robo-Rita"></anvil-component></label>
+    <label class="ui-field"><span>Kind</span><anvil-component type="DropDown" name="kind_box"></anvil-component></label>
+    <label class="ui-field"><span>Its own WIP limit</span><anvil-component type="DropDown" name="wip_box"></anvil-component></label>
+    <p class="ui-hint" anvil:name="wip_hint">One card at a time keeps reviews small. Raise it once reviews keep up.</p>
+    <div class="ui-row end">
+      <anvil-component type="Button" name="remove_button" prop:text="Remove" prop:role='["btn", "btn-danger", "ic-trash"]'></anvil-component>
+      <span class="ui-spacer"></span>
+      <anvil-component type="Button" name="cancel_button" prop:text="Cancel" prop:role='["btn", "btn-ghost"]'></anvil-component>
+      <anvil-component type="Button" name="save_button" prop:role='["btn", "btn-primary"]'></anvil-component>
+    </div>
+  </div>
+</div>

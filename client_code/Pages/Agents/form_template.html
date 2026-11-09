@@ -1,0 +1,69 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><h1 class="aa-h1">AI developers</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row"><anvil-component type="Button" name="new_button" prop:text="Add an agent" prop:role='["btn", "btn-primary", "ic-plus"]'></anvil-component></div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <section class="aa-win cyan"><header class="aa-win-bar"><span>How agents work in a crew</span><i></i><i></i><i></i></header><div class="aa-win-body">
+        <div class="ag-flow">
+          <div><b>Groom</b>Humans write criteria and run the gates. Cards that gate AGENT SOLO or AGENT + HUMAN and pass the Definition of Ready are fair game.</div>
+          <div><b>Pull</b>The agent asks for <code>next</code>: the top Ready card that fits it, with a full markdown brief.</div>
+          <div><b>Claim</b>It claims the card (its own WIP limit and the crew's Doing limit both apply) and logs as it works.</div>
+          <div><b>Hand in</b>It ticks criteria and submits with a summary and PR links. The card moves to Review.</div>
+          <div><b>Approve</b>A human reviews and moves it to Done. Agents never do. Review is where the WIP limit bites first.</div>
+        </div>
+      </div></section>
+      <section class="aa-win warn ag-gap" anvil:name="review_win"><header class="aa-win-bar"><span>Agent work waiting for you</span><em><anvil-component type="Label" name="review_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+        <anvil-component type="RepeatingPanel" name="review_panel" prop:item_template="AutoAgile.Items.CardChip" prop:role='["ag-grid"]'></anvil-component>
+      </div></section>
+      <anvil-component type="RepeatingPanel" name="agents_panel" prop:item_template="AutoAgile.Items.AgentCard" prop:role='["ag-grid", "ag-gap"]'></anvil-component>
+      <div class="ui-empty ag-gap" anvil:name="agents_empty"><i class="ic ic-bot"></i><h3>No agents yet</h3><p>Add Claude Code, Codex or your own bot. Each gets a token and a WIP limit.</p></div>
+      <div class="ag-two">
+        <div class="ui-stack">
+          <section class="aa-win" anvil:name="console_win"><header class="aa-win-bar"><span>Agent console</span><em><anvil-component type="Label" name="console_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body flush">
+            <div anvil:name="console_box">
+              <div class="ag-chips">
+                <anvil-component type="DropDown" name="console_agent" prop:role='["ag-select"]'></anvil-component>
+                <anvil-component type="Button" name="c_help" prop:text="help" prop:role='["ag-chip"]'></anvil-component>
+                <anvil-component type="Button" name="c_whoami" prop:text="whoami" prop:role='["ag-chip"]'></anvil-component>
+                <anvil-component type="Button" name="c_next" prop:text="next" prop:role='["ag-chip"]'></anvil-component>
+                <anvil-component type="Button" name="c_ready" prop:text="cards ready" prop:role='["ag-chip"]'></anvil-component>
+                <anvil-component type="Button" name="c_review" prop:text="cards review" prop:role='["ag-chip"]'></anvil-component>
+                <anvil-component type="Button" name="c_clear" prop:text="clear" prop:role='["ag-chip"]'></anvil-component>
+              </div>
+              <div class="ag-term" anvil:name="term" aria-live="polite">
+                <anvil-component type="RepeatingPanel" name="term_panel" prop:item_template="AutoAgile.Items.TermLine"></anvil-component>
+                <p class="dim" anvil:name="term_intro">AutoAgile agent console. You are driving an agent through the same API it uses with its token.<br>Type "help", or try: next</p>
+              </div>
+              <div class="ag-prompt"><anvil-component type="Label" name="prompt_label" prop:role='["ag-plabel"]'></anvil-component><anvil-component type="TextBox" name="cmd" prop:role='["ag-cmd"]'></anvil-component></div>
+            </div>
+            <p class="muted pad" anvil:name="console_empty">Add an agent to try the console.</p>
+          </div></section>
+          <section class="aa-win lime"><header class="aa-win-bar"><span>House rules (in every brief)</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+            <anvil-component type="TextArea" name="rules_box" prop:height="110"></anvil-component>
+            <div class="ui-row end"><anvil-component type="Button" name="rules_button" prop:text="Save rules" prop:role='["btn", "btn-sm", "btn-primary"]'></anvil-component></div>
+          </div></section>
+        </div>
+        <div class="ui-stack">
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>HTTP API</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small flat-top">Base: <anvil-component type="Label" name="base" prop:role='["code", "inline"]'></anvil-component><br>Auth: <code>Authorization: Bearer aa_…</code> (or <code>?token=</code>). JSON in, JSON out. <a href="#agents" target="_blank" rel="noopener" anvil:name="manifest_link">Manifest</a></p>
+            <anvil-component type="RepeatingPanel" name="ops_panel" prop:item_template="AutoAgile.Items.OpRow" prop:role='["ag-ops"]'></anvil-component>
+            <p class="small muted">Errors come back with a reason the agent can act on: 409 when a WIP limit or a claim conflicts, 423 when the agent is paused, 401 for a bad token.</p>
+            <anvil-component type="Label" name="curl" prop:role='["aa-pre"]'></anvil-component>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>CLAUDE.md snippet</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat-top">Paste into the repo's CLAUDE.md or AGENTS.md so your coding agent knows how to work the board.</p>
+            <anvil-component type="Label" name="snippet" prop:role='["aa-pre"]'></anvil-component>
+            <div class="ui-row ag-copyrow"><anvil-component type="Button" name="copy_snippet" prop:text="Copy snippet" prop:role='["btn", "btn-sm", "ic-copy"]'></anvil-component></div>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>Agent feed</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="feed_panel" prop:item_template="AutoAgile.Items.FeedLine"></anvil-component>
+            <p class="small muted" anvil:name="feed_empty">Nothing from agents yet.</p>
+          </div></section>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

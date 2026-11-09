@@ -1,0 +1,14 @@
+<div class="ui">
+  <anvil-component type="Label" name="title" prop:role='["dlg-title"]'></anvil-component>
+  <p class="muted">One line per note. Turn the music up on what worked, mute what didn't, remix something new.</p>
+  <div class="pl-retro">
+    <label class="louder"><h4>LOUDER</h4><anvil-component type="TextArea" name="louder" prop:placeholder="Keep doing"></anvil-component></label>
+    <label class="mute"><h4>MUTE</h4><anvil-component type="TextArea" name="mute" prop:placeholder="Stop doing"></anvil-component></label>
+    <label class="remix"><h4>REMIX</h4><anvil-component type="TextArea" name="remix" prop:placeholder="Try next"></anvil-component></label>
+  </div>
+  <label class="ui-field"><span>Action items <em>(one per line; start with [x] when done)</em></span><anvil-component type="TextArea" name="actions" prop:height="70"></anvil-component></label>
+  <div class="ui-row end">
+    <anvil-component type="Button" name="cancel_button" prop:text="Cancel" prop:role='["btn", "btn-ghost"]'></anvil-component>
+    <anvil-component type="Button" name="save_button" prop:text="Save retro" prop:role='["btn", "btn-primary"]'></anvil-component>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head"><div><h1 class="aa-h1">Insights</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div><div class="ui-row"><a class="ui-btn" href="#reports"><i class="ic ic-chart"></i>Reports</a></div></div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <anvil-component type="RepeatingPanel" name="lcd_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds"]'></anvil-component>
+      <div class="in-grid">
+        <section class="aa-win lime"><header class="aa-win-bar"><span>Throughput</span><em><anvil-component type="Label" name="tp_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body"><p class="in-note">Cards finished per week. Steady beats spiky: it is what makes forecasts work.</p><anvil-component type="AutoAgile.Components.Chart" name="tp"></anvil-component></div></section>
+        <section class="aa-win"><header class="aa-win-bar"><span>Cycle time</span><em><anvil-component type="Label" name="cy_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body"><anvil-component type="Label" name="cy_note" prop:role='["in-note"]'></anvil-component><anvil-component type="AutoAgile.Components.Chart" name="cy"></anvil-component></div></section>
+        <section class="aa-win cyan"><header class="aa-win-bar"><span>Cumulative flow</span><i></i><i></i><i></i></header><div class="aa-win-body"><p class="in-note">Bands that stay parallel mean smooth flow. A widening Doing band means you are starting more than you finish.</p><anvil-component type="AutoAgile.Components.Chart" name="cfd"></anvil-component></div></section>
+        <section class="aa-win"><header class="aa-win-bar"><span>Velocity</span><i></i><i></i><i></i></header><div class="aa-win-body">
+          <div anvil:name="vel_box"><p class="in-note">Points committed and finished per sprint.</p><anvil-component type="AutoAgile.Components.Chart" name="vel"></anvil-component></div>
+          <div anvil:name="vel_empty"><p class="in-note">Velocity appears once your crew runs sprints (level 2). Until then, throughput is your rhythm.</p><svg class="aa-smiley" width="60" height="60" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg></div>
+        </div></section>
+        <section class="aa-win warn"><header class="aa-win-bar"><span>Gate accuracy</span><em><anvil-component type="Label" name="gate_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body"><anvil-component type="Label" name="gate_note" prop:role='["in-note"]'></anvil-component><anvil-component type="AutoAgile.Components.Chart" name="gate"></anvil-component></div></section>
+        <section class="aa-win cyan"><header class="aa-win-bar"><span>Agents and humans</span><i></i><i></i><i></i></header><div class="aa-win-body">
+          <p class="in-note">Points finished in the last 8 weeks, and how long finished work waited in Review.</p>
+          <anvil-component type="RepeatingPanel" name="split_lcds" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds"]'></anvil-component>
+          <div anvil:name="split_box">
+            <div class="in-split" anvil:name="split_bar" role="img"><i anvil:name="split_agent"></i><i class="in-hum"></i></div>
+            <div class="aa-legend"><span><i class="lg-agent"></i><anvil-component type="Label" name="agent_pct" prop:role='["inline"]'></anvil-component></span><span><i class="lg-human"></i><anvil-component type="Label" name="human_pct" prop:role='["inline"]'></anvil-component></span></div>
+          </div>
+          <anvil-component type="Label" name="review_facts" prop:role='["in-facts"]'></anvil-component>
+          <anvil-component type="Label" name="review_warn" prop:text="Agent work waits longer for review than human work. Agents are fast; reviews are the bottleneck. Set a daily review slot." prop:role='["in-warn"]'></anvil-component>
+        </div></section>
+      </div>
+      <section class="aa-win in-aging"><header class="aa-win-bar"><span>Aging work in progress</span><em><anvil-component type="Label" name="age_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+        <anvil-component type="RepeatingPanel" name="aging_panel" prop:item_template="AutoAgile.Items.AgingRow"></anvil-component>
+        <p class="muted small" anvil:name="aging_empty">Nothing in progress.</p>
+      </div></section>
+    </div>
+  </anvil-block>
+</anvil-form>

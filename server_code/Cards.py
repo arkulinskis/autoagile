@@ -258,7 +258,7 @@ def new_card(t, title, user=None, agent=None, **kw):
     n = t["next_number"] or 1
     t["next_number"] = n + 1
     now = C.now()
-    row = dict(team=t, number=n, title=title, body="", type="story", status="backlog", priority=2, rank=M.next_rank(t),
+    row: dict = dict(team=t, number=n, title=title, body="", type="story", status="backlog", priority=2, rank=M.next_rank(t),
                points=None, points_src=None, gates={}, acceptance=[], labels=[], links=[], blocked=False, blocked_reason="",
                created=now, created_by=user, updated=now, moved_at=now, is_demo=False)
     row.update(kw)

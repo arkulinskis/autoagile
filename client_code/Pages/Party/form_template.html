@@ -1,0 +1,32 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div anvil:name="stage_box">
+        <div class="aa-head">
+          <div>
+            <h1 class="aa-h1">Through the gates</h1>
+            <anvil-component type="Label" name="sub" prop:text="Answer six questions; the ladder picks the points. No arguing about 3 versus 5." prop:role='["aa-sub"]'></anvil-component>
+          </div>
+          <div class="ui-row"><anvil-component type="Label" name="count" prop:role='["pt-count"]'></anvil-component><a class="ui-btn" href="#backlog">Done for now</a></div>
+        </div>
+        <div class="pt-stage">
+          <section class="aa-win lime"><header class="aa-win-bar"><span><anvil-component type="Label" name="key"></anvil-component></span><i></i><i></i><i></i></header><div class="aa-win-body pt-card">
+            <div class="ui-row"><anvil-component type="Label" name="type_tag" prop:role='["aa-type"]'></anvil-component><anvil-component type="Label" name="prio" prop:role='["aa-prio"]'></anvil-component></div>
+            <anvil-component type="Label" name="title" prop:role='["pt-title"]'></anvil-component>
+            <anvil-component type="Label" name="epic" prop:role='["fine-print"]'></anvil-component>
+            <p class="small muted"><anvil-component type="Label" name="acc" prop:role='["inline"]'></anvil-component> <a href="#board" anvil:name="card_link">Open the card</a> to read or edit it.</p>
+            <p class="pt-keys">KEYS: 1-4 answer the next gate · ENTER save · S skip</p>
+            <div class="ui-row">
+              <anvil-component type="Button" name="save_button" prop:text="Save &amp; next" prop:enabled="false" prop:role='["btn", "btn-primary", "ic-check"]'></anvil-component>
+              <anvil-component type="Button" name="skip_button" prop:text="Skip" prop:role='["btn"]'></anvil-component>
+            </div>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>Complexity gates</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="AutoAgile.Components.Gates" name="gates"></anvil-component>
+          </div></section>
+        </div>
+      </div>
+      <div class="ui-empty big" anvil:name="done_box"><svg class="aa-smiley" width="90" height="90" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg><h2>Backlog groomed</h2><anvil-component type="Label" name="done_text"></anvil-component><div class="ui-row center"><a class="ui-btn primary" href="#backlog">Back to the backlog</a></div></div>
+    </div>
+  </anvil-block>
+</anvil-form>

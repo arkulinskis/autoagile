@@ -1,0 +1,11 @@
+<div class="ui">
+  <h2 class="dlg-h">Your crews</h2>
+  <p class="muted">A crew is a team with one board. Demo crews are a shared sandbox: play freely.</p>
+  <anvil-component type="RepeatingPanel" name="crews_panel" prop:item_template="AutoAgile.Items.CrewRow" prop:role='["crewlist"]'></anvil-component>
+  <div class="ui-row">
+    <anvil-component type="Button" name="new_button" prop:text="New crew" prop:role='["btn", "btn-primary", "ic-plus"]'></anvil-component>
+    <anvil-component type="Button" name="join_button" prop:text="Join with a code" prop:role='["btn", "ic-key"]'></anvil-component>
+    <span class="ui-spacer"></span>
+    <anvil-component type="Button" name="close_button" prop:text="Close" prop:role='["btn", "btn-ghost"]'></anvil-component>
+  </div>
+</div>

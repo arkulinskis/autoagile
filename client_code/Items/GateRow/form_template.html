@@ -1,0 +1,13 @@
+<div class="aa-gate">
+  <div class="q">
+    <anvil-component type="Label" name="gname" prop:role='["gate-name"]' bind:text="self.item['g']['name']"></anvil-component>
+    <anvil-component type="Label" name="question" prop:role='["gate-q"]' bind:text="self.item['g']['q']"></anvil-component>
+    <span class="gate-keys" anvil:name="keys">keys 1-4</span>
+  </div>
+  <div class="opts" role="radiogroup" anvil:name="opts">
+    <anvil-component type="Button" name="o0" prop:role='["gate-opt", "lv0"]'></anvil-component>
+    <anvil-component type="Button" name="o1" prop:role='["gate-opt", "lv1"]'></anvil-component>
+    <anvil-component type="Button" name="o2" prop:role='["gate-opt", "lv2"]'></anvil-component>
+    <anvil-component type="Button" name="o3" prop:role='["gate-opt", "lv3"]'></anvil-component>
+  </div>
+</div>

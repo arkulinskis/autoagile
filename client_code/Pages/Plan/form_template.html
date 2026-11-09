@@ -1,0 +1,105 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head"><div><h1 class="aa-h1">Plan</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div></div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <nav class="ui-tabs" aria-label="Plan">
+        <a href="#plan/level" anvil:name="t_level"><i class="ic ic-zap"></i>Level</a>
+        <a href="#plan/sprints" anvil:name="t_sprints"><i class="ic ic-refresh"></i><anvil-component type="Label" name="tl_sprints" prop:text="Sprints" prop:role='["inline"]'></anvil-component></a>
+        <a href="#plan/quarter" anvil:name="t_quarter"><i class="ic ic-calendar"></i><anvil-component type="Label" name="tl_quarter" prop:text="3 months" prop:role='["inline"]'></anvil-component></a>
+        <a href="#plan/year" anvil:name="t_year"><i class="ic ic-layers"></i><anvil-component type="Label" name="tl_year" prop:text="Year" prop:role='["inline"]'></anvil-component></a>
+        <a href="#plan/epics" anvil:name="t_epics"><i class="ic ic-flag"></i>Epics</a>
+      </nav>
+      <div class="pl-tabarea" anvil:name="tab_area">
+        <div class="pl-lockbox" anvil:name="lockbox">
+          <section class="aa-win warn"><header class="aa-win-bar"><span><anvil-component type="Label" name="lock_title"></anvil-component></span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="Label" name="lock_text" prop:role='["lock-text"]'></anvil-component>
+            <anvil-component type="Label" name="lock_level" prop:role='["fine-print"]'></anvil-component>
+            <a class="ui-btn primary sm" href="#plan/level"><i class="ic ic-zap"></i>See the level checks</a>
+          </div></section>
+        </div>
+        <div anvil:name="tab_body">
+          <div anvil:name="level_box">
+            <div class="aa-levels"><anvil-component type="RepeatingPanel" name="levels_panel" prop:item_template="AutoAgile.Items.LevelCell" prop:role='["contents"]'></anvil-component></div>
+            <div class="pl-two">
+              <div>
+                <section class="aa-win" anvil:name="checks_win"><header class="aa-win-bar"><span><anvil-component type="Label" name="checks_title"></anvil-component></span><em><anvil-component type="Label" name="checks_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+                  <anvil-component type="Label" name="next_blurb"></anvil-component>
+                  <div class="aa-meter" anvil:name="meter" role="img"><anvil-component type="RepeatingPanel" name="meter_panel" prop:item_template="AutoAgile.Items.LevelStep" prop:role='["contents"]'></anvil-component></div>
+                  <anvil-component type="RepeatingPanel" name="checks_panel" prop:item_template="AutoAgile.Items.CheckRow" prop:role='["pl-checks"]'></anvil-component>
+                  <div class="ui-row pl-levelacts">
+                    <anvil-component type="Button" name="levelup_button" prop:role='["btn", "btn-primary", "btn-lg", "ic-zap"]'></anvil-component>
+                    <anvil-component type="Button" name="force_button" prop:role='["btn"]'></anvil-component>
+                    <anvil-component type="Label" name="force_note" prop:role='["fine-print"]'></anvil-component>
+                  </div>
+                </div></section>
+                <section class="aa-win lime" anvil:name="top_win"><header class="aa-win-bar"><span>Top level</span><i></i><i></i><i></i></header><div class="aa-win-body"><div class="ui-row"><svg class="aa-smiley" width="64" height="64" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg><div class="grow"><h3 class="flat">YEAR // Roadmap</h3><p class="muted flat">Your crew plans and estimates a year ahead from measured capacity. Keep the sprints honest and the forecast stays honest.</p></div></div></div></section>
+              </div>
+              <div class="ui-stack">
+                <section class="aa-win cyan"><header class="aa-win-bar"><span>What each level adds</span><i></i><i></i><i></i></header><div class="aa-win-body">
+                  <anvil-component type="RepeatingPanel" name="levelinfo_panel" prop:item_template="AutoAgile.Items.LevelInfoRow"></anvil-component>
+                  <anvil-component type="Button" name="down_button" prop:role='["btn", "btn-sm"]'></anvil-component>
+                </div></section>
+                <section class="aa-win"><header class="aa-win-bar"><span>Level history</span><i></i><i></i><i></i></header><div class="aa-win-body flush">
+                  <anvil-component type="RepeatingPanel" name="log_panel" prop:item_template="AutoAgile.Items.LevelLogRow"></anvil-component>
+                  <p class="small muted pad" anvil:name="log_empty">No changes yet.</p>
+                </div></section>
+              </div>
+            </div>
+          </div>
+          <div anvil:name="sprints_box">
+            <section class="aa-win lime" anvil:name="active_win"><header class="aa-win-bar"><span><anvil-component type="Label" name="active_title"></anvil-component></span><em><anvil-component type="Label" name="active_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <div class="ui-row between pl-activehead">
+                <div><anvil-component type="Label" name="active_goal" prop:role='["strong"]'></anvil-component><anvil-component type="Label" name="active_meta" prop:role='["fine-print"]'></anvil-component></div>
+                <div class="ui-row">
+                  <anvil-component type="Button" name="goal_button" prop:text="Goal" prop:role='["btn", "btn-sm", "ic-edit"]'></anvil-component>
+                  <anvil-component type="Button" name="close_button" prop:text="Close sprint" prop:role='["btn", "btn-primary", "btn-sm", "ic-check"]'></anvil-component>
+                </div>
+              </div>
+              <anvil-component type="AutoAgile.Components.Chart" name="burn"></anvil-component>
+            </div></section>
+            <section class="aa-win warn" anvil:name="noactive_win"><header class="aa-win-bar"><span>No sprint running</span><i></i><i></i><i></i></header><div class="aa-win-body">
+              <p class="flat-top">Plan the next sprint on the backlog: pick cards up to your velocity, set a goal, start it.</p><a class="ui-btn primary sm" href="#backlog"><i class="ic ic-list"></i>Plan from the backlog</a>
+            </div></section>
+            <div class="pl-two">
+              <section class="aa-win"><header class="aa-win-bar"><span>Velocity</span><em><anvil-component type="Label" name="vel_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+                <anvil-component type="AutoAgile.Components.Chart" name="vel_chart"></anvil-component>
+                <p class="small muted" anvil:name="vel_empty">Close your first sprint to see velocity.</p>
+              </div></section>
+              <section class="aa-win"><header class="aa-win-bar"><span>Past sprints</span><i></i><i></i><i></i></header><div class="aa-win-body flush">
+                <anvil-component type="RepeatingPanel" name="past_panel" prop:item_template="AutoAgile.Items.PastSprintRow"></anvil-component>
+                <p class="small muted pad" anvil:name="past_empty">None yet.</p>
+              </div></section>
+            </div>
+          </div>
+          <div anvil:name="quarter_box">
+            <anvil-component type="RepeatingPanel" name="q_lcds" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds"]'></anvil-component>
+            <section class="aa-win lime pl-gap"><header class="aa-win-bar"><span>Three-month forecast</span><em><anvil-component type="Label" name="q_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="Label" name="q_note" prop:role='["fine-print"]'></anvil-component>
+              <div class="pl-gantt">
+                <div class="pl-slots"><span class="faint small">EPIC</span><div class="lab" anvil:name="slot_lab"><anvil-component type="RepeatingPanel" name="slots_panel" prop:item_template="AutoAgile.Items.SlotLabel" prop:role='["contents"]'></anvil-component></div><span class="faint small">CONFIDENCE</span></div>
+                <anvil-component type="RepeatingPanel" name="gantt_panel" prop:item_template="AutoAgile.Items.GanttRow" prop:role='["contents"]'></anvil-component>
+              </div>
+              <p class="muted" anvil:name="gantt_empty">No epics in the next three months. Give epics a quarter on the Epics tab.</p>
+            </div></section>
+          </div>
+          <div anvil:name="year_box">
+            <anvil-component type="RepeatingPanel" name="y_lcds" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds"]'></anvil-component>
+            <div class="pl-year pl-gap"><anvil-component type="RepeatingPanel" name="quarters_panel" prop:item_template="AutoAgile.Items.Quarter" prop:role='["contents"]'></anvil-component></div>
+            <section class="aa-win pl-gap"><header class="aa-win-bar"><span>Later / unscheduled</span><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="later_panel" prop:item_template="AutoAgile.Items.EpicCard" prop:role='["pl-later"]'></anvil-component>
+              <p class="small muted" anvil:name="later_empty">Everything has a quarter.</p>
+            </div></section>
+          </div>
+          <div anvil:name="epics_box">
+            <section class="aa-win"><header class="aa-win-bar"><span>Epics</span><em><anvil-component type="Label" name="epics_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body flush">
+              <div class="ui-row pad"><anvil-component type="Button" name="new_epic" prop:text="New epic" prop:role='["btn", "btn-primary", "btn-sm", "ic-plus"]'></anvil-component><span class="small muted">Big goals that hold many cards. Size them S/M/L/XL until they are broken down.</span></div>
+              <anvil-component type="RepeatingPanel" name="epics_panel" prop:item_template="AutoAgile.Items.EpicRow"></anvil-component>
+              <p class="muted pad" anvil:name="epics_empty">No epics yet.</p>
+            </div></section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

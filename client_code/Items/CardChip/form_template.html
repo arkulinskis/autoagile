@@ -1,0 +1,18 @@
+<a class="aa-card" href="#board">
+  <div class="top">
+    <anvil-component type="Label" name="key" prop:role='["chip-key"]' bind:text="self.item['key']"></anvil-component>
+    <anvil-component type="Label" name="type_tag" prop:role='["aa-type"]'></anvil-component>
+    <anvil-component type="Label" name="prio" prop:role='["aa-prio"]'></anvil-component>
+    <span class="ui-spacer"></span>
+    <anvil-component type="Label" name="pts" prop:role='["aa-pts"]'></anvil-component>
+  </div>
+  <anvil-component type="Label" name="title" prop:role='["chip-title"]'></anvil-component>
+  <div class="aa-tagline" anvil:name="tagline"><anvil-component type="Label" name="labels" prop:role='["chip-labels"]'></anvil-component></div>
+  <div class="bot">
+    <anvil-component type="AutoAgile.Components.Who" name="who"></anvil-component>
+    <anvil-component type="Label" name="acc" prop:role='["chip-meta"]'></anvil-component>
+    <anvil-component type="Label" name="rdy" prop:text="⚡RDY" prop:role='["chip-rdy"]'></anvil-component>
+    <span class="sp"></span>
+    <anvil-component type="Label" name="age" prop:role='["chip-age"]'></anvil-component>
+  </div>
+</a>

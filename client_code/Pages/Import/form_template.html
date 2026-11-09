@@ -1,0 +1,68 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><h1 class="aa-h1">Import and export</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row"><a class="ui-btn" href="#backlog"><i class="ic ic-list"></i>Backlog</a></div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // imports go into your own crews. <a href="#crew/new">Start one</a>, then come back. You can still try reading a file here and export the demo.</div>
+      <div class="im-grid">
+        <div class="ui-stack">
+          <section class="aa-win lime"><header class="aa-win-bar"><span>1 · Pick a file</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <div class="ui-seg im-src" role="group" aria-label="Source">
+              <anvil-component type="Button" name="s_jira" prop:text="Jira CSV" prop:role='["seg"]'></anvil-component>
+              <anvil-component type="Button" name="s_trello" prop:text="Trello JSON" prop:role='["seg"]'></anvil-component>
+              <anvil-component type="Button" name="s_csv" prop:text="Any CSV" prop:role='["seg"]'></anvil-component>
+              <anvil-component type="Button" name="s_autoagile" prop:text="AutoAgile JSON" prop:role='["seg"]'></anvil-component>
+            </div>
+            <anvil-component type="Label" name="src_help" prop:role='["fine-print", "im-help"]'></anvil-component>
+            <label class="im-drop" anvil:dom-node="zone"><input type="file" anvil:dom-node="file" accept=".csv,.json,.txt,text/csv,application/json" aria-label="Choose a file"><br><span class="small muted">or drop the file here</span></label>
+            <details class="im-paste"><summary class="small">Paste instead</summary>
+              <anvil-component type="TextArea" name="paste_box" prop:placeholder="Paste CSV or JSON here" prop:height="100"></anvil-component>
+              <anvil-component type="Button" name="read_paste" prop:text="Read it" prop:role='["btn", "btn-sm"]'></anvil-component>
+            </details>
+          </div></section>
+          <section class="aa-win" anvil:name="map_win"><header class="aa-win-bar"><span>2 · Check what is what</span><em><anvil-component type="Label" name="map_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="Label" name="parsed_note" prop:role='["fine-print"]'></anvil-component>
+            <anvil-component type="RepeatingPanel" name="map_panel" prop:item_template="AutoAgile.Items.MapRow" prop:role='["im-map"]'></anvil-component>
+            <h3 class="im-h">Statuses → columns</h3>
+            <anvil-component type="RepeatingPanel" name="status_panel" prop:item_template="AutoAgile.Items.StatusRow" prop:role='["im-st"]'></anvil-component>
+            <div class="ui-stack im-opts">
+              <anvil-component type="CheckBox" name="opt_history" prop:text="Keep dates (created, finished), so throughput, cycle times and level checks count your past" prop:checked="true"></anvil-component>
+              <anvil-component type="CheckBox" name="opt_epics" prop:text="Create epics that don't exist yet" prop:checked="true"></anvil-component>
+              <label class="ui-field" anvil:name="link_field"><span>Link back to Jira <em>(optional: https://yourcompany.atlassian.net/browse/)</em></span><anvil-component type="TextBox" name="link_box" prop:placeholder="https://yourcompany.atlassian.net/browse/"></anvil-component></label>
+            </div>
+          </div></section>
+          <section class="aa-win lime" anvil:name="preview_win"><header class="aa-win-bar"><span>3 · Preview and import</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <div class="im-prev"><div class="im-prow hd"><span>Title</span><span>Column</span><span>Type</span><span>Pts</span><span>Who</span><span>Epic</span><span>Created</span></div>
+              <anvil-component type="RepeatingPanel" name="preview_panel" prop:item_template="AutoAgile.Items.PreviewRow" prop:role='["contents"]'></anvil-component></div>
+            <anvil-component type="Label" name="need_title" prop:text="Pick the column that holds the title." prop:role='["msg-bad-text"]'></anvil-component>
+            <div class="ui-row im-go"><anvil-component type="Button" name="import_button" prop:role='["btn", "btn-primary", "btn-lg", "ic-upload"]'></anvil-component></div>
+            <div class="im-bar" anvil:name="bar"><i anvil:name="bar_fill"></i></div>
+            <div anvil:name="result_box">
+              <anvil-component type="RepeatingPanel" name="result_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds"]'></anvil-component>
+              <anvil-component type="Label" name="unmatched" prop:role='["fine-print"]'></anvil-component>
+              <anvil-component type="Label" name="invalid" prop:role='["fine-print"]'></anvil-component>
+              <div class="ui-row"><a class="ui-btn" href="#backlog">Open the backlog</a><a class="ui-btn" href="#reports/flow">See the history in Reports</a><a class="ui-btn" href="#plan">Level checks</a></div>
+            </div>
+          </div></section>
+        </div>
+        <div class="ui-stack">
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Take everything with you</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small flat-top">No lock-in. Any member can download the whole crew at any time: cards with their history and comments, epics, sprints and retros, requests, settings. Import the JSON into another AutoAgile crew, or open the CSV in a spreadsheet or another tracker.</p>
+            <div class="ui-stack">
+              <anvil-component type="Button" name="export_json" prop:text="Everything (JSON)" prop:role='["btn", "btn-primary", "ic-download"]'></anvil-component>
+              <anvil-component type="Button" name="export_csv" prop:text="Cards as CSV" prop:role='["btn", "ic-download"]'></anvil-component>
+              <p class="small muted flat">The CSV uses Jira-style column names, so other trackers read it too.</p>
+            </div>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>What comes along</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <dl class="aa-kv"><dt>Kept</dt><dd>Titles, descriptions, types, priorities, points, labels, epics, comments, links back, and the dates that make your history count.</dd>
+              <dt>People</dt><dd>Matched to crew members by email or name. Anyone else stays in the card text.</dd><dt>Twice?</dt><dd>Safe. Cards already imported (same key) are skipped.</dd>
+              <dt>Points</dt><dd>Snapped to the nearest rung (1, 2, 3, 5, 8, 13, 21). Run the gates later to make them comparable.</dd></dl>
+          </div></section>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

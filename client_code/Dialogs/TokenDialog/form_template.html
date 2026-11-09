@@ -1,0 +1,13 @@
+<div class="ui">
+  <anvil-component type="Label" name="title" prop:role='["dlg-title"]'></anvil-component>
+  <p><b>Copy it now: it is shown only once.</b> We keep only a fingerprint of it. If it leaks, issue a new one (the old one stops working).</p>
+  <anvil-component type="Label" name="token" prop:role='["aa-pre"]'></anvil-component>
+  <div class="ui-row tk-row"><anvil-component type="Button" name="copy_token" prop:text="Copy token" prop:role='["btn", "btn-primary", "btn-sm", "ic-copy"]'></anvil-component></div>
+  <p class="small muted">Give the agent the token as AUTOAGILE_TOKEN and this snippet in its instructions (CLAUDE.md, AGENTS.md, a system prompt):</p>
+  <anvil-component type="Label" name="snippet" prop:role='["aa-pre"]'></anvil-component>
+  <div class="ui-row tk-row">
+    <anvil-component type="Button" name="copy_snippet" prop:text="Copy snippet" prop:role='["btn", "btn-sm", "ic-copy"]'></anvil-component>
+    <span class="ui-spacer"></span>
+    <anvil-component type="Button" name="done_button" prop:text="Done" prop:role='["btn"]'></anvil-component>
+  </div>
+</div>

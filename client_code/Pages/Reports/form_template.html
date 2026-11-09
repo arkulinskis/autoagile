@@ -1,0 +1,53 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><anvil-component type="Label" name="title" prop:role='["page-title"]'></anvil-component><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row">
+          <a class="ui-btn" href="#insights"><i class="ic ic-chart"></i>Insights</a>
+          <anvil-component type="Button" name="csv_button" prop:text="CSV" prop:role='["btn", "ic-download"]'></anvil-component>
+          <anvil-component type="Button" name="print_button" prop:text="Print" prop:role='["btn", "ic-printer"]'></anvil-component>
+        </div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <nav class="rp-tabs" aria-label="Reports">
+        <a href="#reports/burnup" anvil:name="t_burnup">Burn-up</a><a href="#reports/forecast" anvil:name="t_forecast">Forecast</a><a href="#reports/flow" anvil:name="t_flow">Flow</a><a href="#reports/cycle" anvil:name="t_cycle">Cycle time</a><a href="#reports/epics" anvil:name="t_epics">Epic map</a><a href="#reports/mix" anvil:name="t_mix">Work mix</a>
+      </nav>
+      <div class="rp-ctl">
+        <anvil-component type="DropDown" name="scope_box" prop:role='["rp-sel"]'></anvil-component>
+        <div class="ui-seg" role="group" aria-label="Mode" anvil:name="mode_seg">
+          <anvil-component type="Button" name="m_when" prop:text="When done?" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="m_howmany" prop:text="How many by?" prop:role='["seg"]'></anvil-component>
+        </div>
+        <anvil-component type="DropDown" name="fscope_box" prop:role='["rp-sel"]'></anvil-component>
+        <anvil-component type="TextBox" name="custom_box" prop:type="number" prop:role='["rp-num"]'></anvil-component>
+        <label class="small rp-date" anvil:name="date_field">By <anvil-component type="DatePicker" name="date_box" prop:format="D MMM YYYY"></anvil-component></label>
+        <div class="ui-seg" role="group" aria-label="Show" anvil:name="open_seg">
+          <anvil-component type="Button" name="o_open" prop:text="Open work" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="o_all" prop:text="Everything" prop:role='["seg"]'></anvil-component>
+        </div>
+        <div class="ui-seg" role="group" aria-label="By" anvil:name="by_seg">
+          <anvil-component type="Button" name="b_type" prop:text="By type" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="b_who" prop:text="By who" prop:role='["seg"]'></anvil-component>
+        </div>
+        <div class="ui-seg" role="group" aria-label="Range" anvil:name="range_seg">
+          <anvil-component type="Button" name="r_4" prop:text="4W" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="r_12" prop:text="12W" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="r_26" prop:text="26W" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="r_all" prop:text="ALL" prop:role='["seg"]'></anvil-component>
+        </div>
+        <div class="ui-seg" role="group" aria-label="Unit" anvil:name="unit_seg">
+          <anvil-component type="Button" name="u_cards" prop:text="Cards" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="u_points" prop:text="Points" prop:role='["seg"]'></anvil-component>
+        </div>
+      </div>
+      <anvil-component type="RepeatingPanel" name="kpi_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "rp-kpis"]'></anvil-component>
+      <section class="aa-win lime"><header class="aa-win-bar"><span><anvil-component type="Label" name="win_title"></anvil-component></span><em><anvil-component type="Label" name="win_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+        <anvil-component type="Label" name="note" prop:role='["rp-note"]'></anvil-component>
+        <div anvil:dom-node="legend"></div>
+        <div class="rp-chart" anvil:dom-node="chart"></div>
+        <div anvil:dom-node="table"></div>
+      </div></section>
+    </div>
+  </anvil-block>
+</anvil-form>

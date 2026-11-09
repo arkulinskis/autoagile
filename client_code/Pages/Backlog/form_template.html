@@ -1,0 +1,50 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div>
+          <h1 class="aa-h1">Backlog</h1>
+          <anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component>
+        </div>
+        <div class="ui-row">
+          <a class="ui-btn" href="#import"><i class="ic ic-upload"></i>Import</a>
+          <a class="ui-btn" href="#backlog/party" anvil:name="party_link"><i class="ic ic-gate"></i><anvil-component type="Label" name="party_text" prop:text="Estimation party"></anvil-component></a>
+        </div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <section class="aa-win cyan"><header class="aa-win-bar"><span>Quick add</span><i></i><i></i><i></i></header><div class="aa-win-body">
+        <div class="bl-add">
+          <anvil-component type="TextBox" name="add_box" prop:placeholder="Fix login timeout #bug !1 ~3 @claude +chat" prop:role='["bl-add-input"]'></anvil-component>
+          <anvil-component type="DropDown" name="add_sprint" prop:role='["bl-add-sprint"]'></anvil-component>
+          <anvil-component type="Button" name="add_button" prop:text="Add" prop:role='["btn", "btn-primary", "ic-plus"]'></anvil-component>
+        </div>
+        <p class="bl-syntax"><code>#bug</code> type (story bug task spike chore) · <code>!0</code>-<code>!3</code> priority · <code>~5</code> points by hand · <code>@name</code> assign a person or agent · <code>+epic</code> link an epic · other <code>#words</code> become labels</p>
+      </div></section>
+      <div class="bl-sprints" anvil:name="sprints_box">
+        <anvil-component type="RepeatingPanel" name="sprints_panel" prop:item_template="AutoAgile.Items.SprintPanel" prop:role='["contents"]'></anvil-component>
+        <section class="aa-win" anvil:name="next_win"><header class="aa-win-bar"><span>Next sprint</span><i></i><i></i><i></i></header><div class="aa-win-body">
+          <anvil-component type="Label" name="velocity_text" prop:role='["fine-print"]'></anvil-component>
+          <div class="ui-stack">
+            <anvil-component type="TextBox" name="goal_box" prop:placeholder="Sprint goal (one sentence)"></anvil-component>
+            <anvil-component type="Button" name="plan_button" prop:text="Plan a sprint" prop:role='["btn", "btn-sm", "ic-plus"]'></anvil-component>
+          </div>
+        </div></section>
+      </div>
+      <div class="bl-bar">
+        <div class="ui-seg" role="group" aria-label="Filter">
+          <anvil-component type="Button" name="f_all" prop:text="All" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="f_unest" prop:text="Unestimated" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="f_agent" prop:text="Agent-ready" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="f_bugs" prop:text="Bugs" prop:role='["seg"]'></anvil-component>
+        </div>
+        <anvil-component type="TextBox" name="query" prop:type="search" prop:placeholder="Filter: @name #label !1 ~5 +epic is:blocked" prop:role='["bl-q"]'></anvil-component>
+        <anvil-component type="Label" name="rank_hint" prop:role='["fine-print"]'></anvil-component>
+      </div>
+      <div class="bl-list" anvil:name="list_box">
+        <div class="bl-row hd"><span>#</span><span>Key</span><span>Card</span><span>Pts</span><span>Fit · Ready</span><span>Who</span><span></span></div>
+        <anvil-component type="RepeatingPanel" name="rows_panel" prop:item_template="AutoAgile.Items.BacklogRow" prop:role='["contents"]'></anvil-component>
+      </div>
+      <div class="ui-empty" anvil:name="empty"><i class="ic ic-list"></i><anvil-component type="Label" name="empty_title" prop:role='["empty-title"]'></anvil-component><p>Type a card in Quick add above.</p></div>
+    </div>
+  </anvil-block>
+</anvil-form>

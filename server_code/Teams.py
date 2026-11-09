@@ -143,7 +143,7 @@ def update_crew(team_id, fields):
         wip = {}
         for col in ("ready", "doing", "review"):
             try:
-                v = int((fields["wip"] or {}).get(col))
+                v = int((fields["wip"] or {}).get(col, "-"))  # a missing value fails like None did
             except (TypeError, ValueError, AttributeError):
                 continue
             if 1 <= v <= 50:
@@ -259,7 +259,9 @@ def leave_crew(team_id):
         return C.fail("Owners can't leave. Hand the crew to someone else first, or delete it.")
     for c in app_tables.cards.search(team=t, assignee_user=me):
         c["assignee_user"] = None
-    app_tables.members.get(team=t, user=me).delete()
+    row = app_tables.members.get(team=t, user=me)
+    if row is not None:
+        row.delete()
     M.log(t, "crew", "%s left the crew." % C.name_of(me), user=me)
     return C.ok()
 
