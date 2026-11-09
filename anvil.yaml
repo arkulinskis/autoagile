@@ -849,7 +849,7 @@ native_deps:
     \ that unlock as your crew matures.\", \"image\": \"https://autoagile.anvil.app/_/theme/og-image.png\", \"serviceType\"\
     : \"Kanban to Scrum to roadmaps, for crews of humans and AI agents\", \"provider\": {\"@id\": \"https://arkvital.com/#org\"\
     }, \"areaServed\": \"Worldwide\", \"availableChannel\": {\"@type\": \"ServiceChannel\", \"serviceUrl\": \"https://autoagile.anvil.app/\"\
-    , \"name\": \"Web browser\"}, \"availableLanguage\": \"en\", \"audience\": {\"@type\": \"Audience\", \"audienceType\"\
+    , \"name\": \"Web browser\", \"availableLanguage\": \"en\"}, \"audience\": {\"@type\": \"Audience\", \"audienceType\"\
     : \"Software crews that mix human and AI developers\"}}, {\"@type\": \"WebSite\", \"@id\": \"https://autoagile.anvil.app/#site\"\
     , \"url\": \"https://autoagile.anvil.app/\", \"name\": \"AutoAgile\", \"publisher\": {\"@id\": \"https://arkvital.com/#org\"\
     }}, {\"@type\": \"Organization\", \"@id\": \"https://arkvital.com/#org\", \"name\": \"Arkvital\", \"url\": \"https://arkvital.com\"\
