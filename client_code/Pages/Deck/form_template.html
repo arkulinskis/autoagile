@@ -1,0 +1,69 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div>
+          <anvil-component type="Label" name="hello" prop:role='["page-title"]'></anvil-component>
+          <anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component>
+        </div>
+        <div class="ui-row">
+          <a class="ui-btn" href="#backlog"><i class="ic ic-plus"></i>Add cards</a>
+          <a class="ui-btn primary" href="#board"><i class="ic ic-board"></i>Open the board</a>
+        </div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <div class="aa-ticker" anvil:name="ticker" aria-label="Agent activity"><div class="in"><anvil-component type="Label" name="ticker_text"></anvil-component></div></div>
+      <anvil-component type="RepeatingPanel" name="lcd_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "dk-lcds"]'></anvil-component>
+      <div class="dk-grid">
+        <div class="dk-col">
+          <section class="aa-win warn"><header class="aa-win-bar"><span>Needs a human</span><em><anvil-component type="Label" name="needs_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="needs_panel" prop:item_template="AutoAgile.Items.CardChip" prop:role='["dk-cards"]'></anvil-component>
+            <div class="ui-empty tight" anvil:name="needs_empty"><svg class="aa-smiley" width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg><h3>All clear</h3><p class="small">Nothing waiting for review and nothing blocked.</p></div>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>Your cards</span><em><anvil-component type="Label" name="mine_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="mine_panel" prop:item_template="AutoAgile.Items.CardChip" prop:role='["dk-cards"]'></anvil-component>
+            <div class="ui-empty tight" anvil:name="mine_empty"><i class="ic ic-board"></i><h3>Nothing on your plate</h3><p class="small">Grab a Ready card from the board, or leave the small ones to the agents.</p><a class="ui-btn sm" href="#board">Go to the board</a></div>
+          </div></section>
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Alerts</span><em><anvil-component type="Label" name="alerts_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="alerts_panel" prop:item_template="AutoAgile.Items.AlertRow" prop:role='["dk-alerts"]'></anvil-component>
+            <p class="muted small flat" anvil:name="alerts_empty"><span class="aa-led on"></span> No alerts. Smooth flow.</p>
+          </div></section>
+        </div>
+        <div class="dk-col">
+          <section class="aa-win lime"><header class="aa-win-bar"><span>Maturity</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <div class="dk-lvl">
+              <div class="now"><svg class="aa-smiley" width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg><div><span class="faint small">YOU ARE AT</span><br><anvil-component type="Label" name="lvl_now" prop:role='["dk-lvl-now"]'></anvil-component></div></div>
+              <anvil-component type="Label" name="lvl_blurb" prop:role='["fine-print"]'></anvil-component>
+              <div anvil:name="next_box">
+                <div class="ui-row between small"><anvil-component type="Label" name="next_name"></anvil-component><anvil-component type="Label" name="next_count" prop:role='["fine-print"]'></anvil-component></div>
+                <div class="aa-meter" anvil:name="meter" role="img"><anvil-component type="RepeatingPanel" name="meter_panel" prop:item_template="AutoAgile.Items.LevelStep" prop:role='["contents"]'></anvil-component></div>
+              </div>
+              <a class="ui-btn primary sm" href="#plan" anvil:name="levelup_link"><i class="ic ic-zap"></i>Level up</a>
+              <a class="ui-btn sm" href="#plan" anvil:name="checks_link">See the checks</a>
+              <div anvil:name="top_box"><p class="small flat"><span class="aa-led on"></span> Top level. Your crew plans a year ahead.</p><a class="ui-btn sm" href="#plan/year">Open the roadmap</a></div>
+            </div>
+          </div></section>
+          <section class="aa-win" anvil:name="req_win"><header class="aa-win-bar"><span>Requests</span><em><anvil-component type="Label" name="req_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="req_panel" prop:item_template="AutoAgile.Items.RequestMini"></anvil-component>
+            <p class="muted small flat" anvil:name="req_empty">No open requests. Share your ask link so people outside the crew can ask.</p>
+            <a class="ui-btn sm dk-more" href="#requests"><i class="ic ic-megaphone"></i>Request desk</a>
+          </div></section>
+          <section class="aa-win" anvil:name="sprint_win"><header class="aa-win-bar"><span><anvil-component type="Label" name="sprint_title"></anvil-component></span><em><anvil-component type="Label" name="sprint_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body dk-sprint">
+            <anvil-component type="Label" name="sprint_goal" prop:role='["dk-goal"]'></anvil-component>
+            <anvil-component type="Label" name="sprint_pts" prop:role='["dk-pts"]'></anvil-component>
+            <anvil-component type="AutoAgile.Components.Chart" name="burn"></anvil-component>
+          </div></section>
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Agents</span><em><anvil-component type="Label" name="agents_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="agents_panel" prop:item_template="AutoAgile.Items.AgentRow"></anvil-component>
+            <p class="muted small" anvil:name="agents_empty">No AI developers yet. Add one and give it a token.</p>
+            <a class="ui-btn sm dk-more" href="#agents" anvil:name="agents_link"><i class="ic ic-terminal"></i>Agent console</a>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>Live feed</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="feed_panel" prop:item_template="AutoAgile.Items.EventRow" prop:role='["dk-feed"]'></anvil-component>
+            <p class="muted small" anvil:name="feed_empty">Quiet so far.</p>
+          </div></section>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

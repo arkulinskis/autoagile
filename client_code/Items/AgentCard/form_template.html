@@ -1,0 +1,16 @@
+<section class="aa-win"><header class="aa-win-bar"><span><anvil-component type="Label" name="kind_title"></anvil-component></span><em><anvil-component type="Label" name="state_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body ag-card">
+  <div class="hd">
+    <anvil-component type="AutoAgile.Components.Who" name="who" prop:size="lg"></anvil-component>
+    <div class="grow"><anvil-component type="Label" name="aname" prop:role='["ag-name"]' bind:text="self.item['name']"></anvil-component><div class="small muted"><span class="aa-led" anvil:name="led"></span> <anvil-component type="Label" name="seen" prop:role='["inline"]'></anvil-component></div></div>
+  </div>
+  <anvil-component type="RepeatingPanel" name="stats_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["ag-stats"]'></anvil-component>
+  <anvil-component type="RepeatingPanel" name="cur_panel" prop:item_template="AutoAgile.Items.FeedLine" prop:role='["ag-cur"]'></anvil-component>
+  <p class="faint small" anvil:name="no_card">No card right now.</p>
+  <p class="small muted ag-tok"><i class="ic ic-key"></i> <anvil-component type="Label" name="tok" prop:role='["inline"]'></anvil-component></p>
+  <div class="ui-row">
+    <anvil-component type="Button" name="toggle" prop:role='["btn", "btn-sm"]'></anvil-component>
+    <anvil-component type="Button" name="token" prop:role='["btn", "btn-sm", "ic-key"]'></anvil-component>
+    <anvil-component type="Button" name="use" prop:text="Console" prop:role='["btn", "btn-sm", "ic-terminal"]'></anvil-component>
+    <anvil-component type="Button" name="edit" prop:role='["btn", "btn-ghost", "btn-icon", "ic-edit"]'></anvil-component>
+  </div>
+</div></section>

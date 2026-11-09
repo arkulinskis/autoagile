@@ -1,0 +1,37 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div>
+          <anvil-component type="Label" name="title" prop:role='["page-title"]'></anvil-component>
+          <anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component>
+        </div>
+        <div class="ui-row">
+          <a class="ui-btn" href="#crew" title="Columns and WIP limits"><i class="ic ic-settings"></i>Columns</a>
+          <a class="ui-btn" href="#backlog"><i class="ic ic-list"></i>Backlog</a>
+        </div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <div class="bd-banner" anvil:name="banner_nosprint"><span class="aa-led warn blink"></span><div class="grow"><b>No sprint is running.</b> <span class="muted">Showing everything in flow. Plan a sprint from the backlog to focus the board.</span></div><a class="ui-btn sm primary" href="#backlog">Plan a sprint</a></div>
+      <div class="bd-banner" anvil:name="banner_goal"><span class="aa-led on"></span><div class="grow"><span class="faint small">SPRINT GOAL</span><br><anvil-component type="Label" name="goal" prop:role='["strong"]'></anvil-component></div><a class="ui-btn sm" href="#reports/burnup">Burn-up</a></div>
+      <div class="bd-banner" anvil:name="banner_kanban"><span class="aa-led pink"></span><div class="grow small"><b>Level 1: KANBAN.</b> Pull the top Ready card, keep Doing under its limit, finish before you start. Sprints unlock when your flow is steady.</div><a class="ui-btn sm" href="#plan">Level checks</a></div>
+      <div class="bd-tools">
+        <div class="ui-seg" role="group" aria-label="Show">
+          <anvil-component type="Button" name="f_all" prop:text="All" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="f_mine" prop:text="Mine" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="f_humans" prop:text="Humans" prop:role='["seg"]'></anvil-component>
+          <anvil-component type="Button" name="f_agents" prop:text="Agents" prop:role='["seg"]'></anvil-component>
+        </div>
+        <anvil-component type="TextBox" name="query" prop:type="search" prop:placeholder="Filter: words @name #bug !1 ~5 +epic is:blocked" prop:role='["bd-q"]'></anvil-component>
+        <anvil-component type="DropDown" name="lanes_box" prop:role='["bd-lanes"]'></anvil-component>
+        <anvil-component type="Label" name="hint" prop:role='["bd-hint"]'></anvil-component>
+      </div>
+      <anvil-component type="RepeatingPanel" name="phone_panel" prop:item_template="AutoAgile.Items.PhoneTab" prop:role='["bd-phonetabs"]'></anvil-component>
+      <div class="bd-scroll" anvil:name="scroller">
+        <div class="bd-grid" anvil:name="head_grid"><anvil-component type="RepeatingPanel" name="heads_panel" prop:item_template="AutoAgile.Items.ColHead" prop:role='["contents"]'></anvil-component></div>
+        <anvil-component type="RepeatingPanel" name="lanes_panel" prop:item_template="AutoAgile.Items.Lane"></anvil-component>
+        <div class="bd-empty bd-nomatch" anvil:name="no_match">No cards match the filter.</div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

@@ -1,0 +1,28 @@
+<div class="bl-row">
+  <anvil-component type="Label" name="rk" prop:role='["bl-rk"]'></anvil-component>
+  <anvil-component type="Label" name="ky" prop:role='["bl-ky"]'></anvil-component>
+  <div class="tt">
+    <a href="#board" anvil:name="title_link"><anvil-component type="Label" name="title"></anvil-component></a>
+    <div class="meta">
+      <anvil-component type="Label" name="type_tag" prop:role='["aa-type"]'></anvil-component>
+      <anvil-component type="Label" name="prio" prop:role='["aa-prio"]'></anvil-component>
+      <span class="aa-dot" anvil:name="epic_dot"></span><anvil-component type="Label" name="epic"></anvil-component>
+      <anvil-component type="Label" name="labels" prop:role='["chip-labels"]'></anvil-component>
+      <anvil-component type="Label" name="ready_badge" prop:text="ready" prop:role='["badge", "badge-good"]'></anvil-component>
+    </div>
+  </div>
+  <span class="pt"><anvil-component type="Label" name="pts" prop:role='["aa-pts"]'></anvil-component></span>
+  <span class="ft">
+    <anvil-component type="Label" name="fit" prop:role='["aa-fit"]'></anvil-component>
+    <anvil-component type="Button" name="gate_button" prop:text="Gates" prop:role='["btn", "btn-sm", "ic-gate"]'></anvil-component>
+    <anvil-component type="Label" name="by_hand" prop:text="set by hand" prop:role='["fine-print"]'></anvil-component>
+    <anvil-component type="Label" name="ready" prop:role='["bl-ready"]' prop:tooltip="Definition of Ready for agents"></anvil-component>
+  </span>
+  <span class="wh"><anvil-component type="AutoAgile.Components.Who" name="who"></anvil-component></span>
+  <span class="acts">
+    <anvil-component type="Button" name="to_sprint" prop:role='["btn", "btn-ghost", "btn-icon", "ic-arrow"]'></anvil-component>
+    <anvil-component type="Button" name="top_button" prop:text="Move to the top" prop:role='["btn", "btn-ghost", "btn-icon", "ic-top"]'></anvil-component>
+    <anvil-component type="Button" name="up_button" prop:text="Move up" prop:role='["btn", "btn-ghost", "btn-icon", "ic-up"]'></anvil-component>
+    <anvil-component type="Button" name="down_button" prop:text="Move down" prop:role='["btn", "btn-ghost", "btn-icon", "ic-down"]'></anvil-component>
+  </span>
+</div>

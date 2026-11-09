@@ -1,0 +1,14 @@
+---
+custom_component: true
+properties:
+  - name: content
+    type: string
+    default_value: ""
+    description: Mini markdown (# heading, - list, **bold**, `code`, [link](https://...)); escaped first
+    default_binding_prop: true
+toolbox_item:
+  title: Markdown
+  group: AutoAgile
+help_text: A card description drawn by the engine's mini markdown (AA.md).
+---
+<div class="aa-md-host"><div anvil:dom-node="out"></div></div>

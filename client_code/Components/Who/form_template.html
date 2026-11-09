@@ -1,0 +1,17 @@
+---
+custom_component: true
+properties:
+  - name: person
+    type: object
+    description: "{kind: user|agent, name, color} or None for nobody"
+    default_binding_prop: true
+  - name: size
+    type: string
+    default_value: ""
+    description: "'' or 'lg'"
+toolbox_item:
+  title: Who
+  group: AutoAgile
+help_text: A person's initials in a circle, or an AI agent's square in its colour (a dashed ? for nobody).
+---
+<span class="aa-who-wrap"><span class="aa-who none" anvil:name="box"><i class="ic ic-bot" anvil:name="bot"></i><anvil-component type="Label" name="letters" prop:text="?" prop:role='["who-letters"]'></anvil-component></span></span>

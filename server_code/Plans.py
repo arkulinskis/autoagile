@@ -112,7 +112,7 @@ def year_roadmap(t, epics, cap):
     per_q = 91.0 / days
     q_start = dt.date(today.year, 3 * ((today.month - 1) // 3) + 1, 1)
     left_frac = max(0.15, 1 - (today - q_start).days / 91.0)
-    buckets = []
+    buckets: list = []
     for i, q in enumerate(qs):
         f = left_frac if i == 0 else 1.0
         buckets.append({"label": q, "capacity": [round(x * per_q * f) for x in cap], "epics": [], "load": 0})

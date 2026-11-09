@@ -1,0 +1,19 @@
+<div class="ui">
+  <anvil-component type="Label" name="title" prop:role='["dlg-title"]'></anvil-component>
+  <div class="ui-stack">
+    <label class="ui-field"><span>Name</span><anvil-component type="TextBox" name="name_box"></anvil-component></label>
+    <label class="ui-field"><span>What and why</span><anvil-component type="TextArea" name="body_box" prop:height="80"></anvil-component></label>
+    <div class="ui-grid two">
+      <label class="ui-field"><span>Size</span><anvil-component type="DropDown" name="size_box"></anvil-component></label>
+      <label class="ui-field"><span>Quarter</span><anvil-component type="DropDown" name="quarter_box"></anvil-component></label>
+      <label class="ui-field"><span>Status</span><anvil-component type="DropDown" name="status_box"></anvil-component></label>
+    </div>
+    <div class="ui-field"><span>Colour</span><anvil-component type="RepeatingPanel" name="colors_panel" prop:item_template="AutoAgile.Items.ColorPick" prop:role='["pl-colors"]'></anvil-component></div>
+    <div class="ui-row end">
+      <anvil-component type="Button" name="delete_button" prop:text="Delete" prop:role='["btn", "btn-danger"]'></anvil-component>
+      <span class="ui-spacer"></span>
+      <anvil-component type="Button" name="cancel_button" prop:text="Cancel" prop:role='["btn", "btn-ghost"]'></anvil-component>
+      <anvil-component type="Button" name="save_button" prop:text="Save" prop:role='["btn", "btn-primary"]'></anvil-component>
+    </div>
+  </div>
+</div>

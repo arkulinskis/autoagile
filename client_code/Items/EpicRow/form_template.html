@@ -1,0 +1,11 @@
+<div class="pl-epicrow">
+  <span class="aa-dot pl-edot" anvil:name="dot"></span>
+  <div class="grow"><anvil-component type="Label" name="title" prop:role='["strong", "inline"]' bind:text="self.item['title']"></anvil-component> <anvil-component type="Label" name="status" prop:role='["badge"]' bind:text="self.item['status']"></anvil-component><anvil-component type="Label" name="meta" prop:role='["fine-print"]'></anvil-component></div>
+  <div class="pl-prog" anvil:name="prog"><i anvil:name="fill"></i></div>
+  <anvil-component type="Label" name="quarter" prop:role='["q", "fine-print"]'></anvil-component>
+  <span class="ui-row tight">
+    <anvil-component type="Button" name="up" prop:text="Rank up" prop:role='["btn", "btn-ghost", "btn-icon", "ic-up"]'></anvil-component>
+    <anvil-component type="Button" name="down" prop:text="Rank down" prop:role='["btn", "btn-ghost", "btn-icon", "ic-down"]'></anvil-component>
+    <anvil-component type="Button" name="edit" prop:text="Edit" prop:role='["btn", "btn-ghost", "btn-icon", "ic-edit"]'></anvil-component>
+  </span>
+</div>

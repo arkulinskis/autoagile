@@ -1,0 +1,36 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div anvil:name="bad_box">
+        <div class="aa-head"><div><h1 class="aa-h1">That link doesn't work</h1><anvil-component type="Label" name="bad_text" prop:role='["aa-sub"]'></anvil-component></div></div>
+        <svg class="aa-smiley" width="80" height="80" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#ff2bd6" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg>
+      </div>
+      <div anvil:name="page">
+        <div class="aa-head">
+          <div><anvil-component type="Label" name="title" prop:role='["page-title"]'></anvil-component><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+          <div class="ui-row"><anvil-component type="Button" name="desk_button" prop:text="Crew request desk" prop:role='["btn", "ic-inbox"]'></anvil-component></div>
+        </div>
+        <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a sandbox: anything you add here is visible to everyone signed in.</div>
+        <div class="rq-grid">
+          <div class="ui-stack">
+            <section class="aa-win"><header class="aa-win-bar"><span>Requests</span><em><anvil-component type="Label" name="reqs_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="reqs_panel" prop:item_template="AutoAgile.Items.RequestRow"></anvil-component>
+              <p class="muted small flat" anvil:name="reqs_empty">Nothing asked yet. Be the first.</p>
+            </div></section>
+          </div>
+          <div class="ui-stack">
+            <section class="aa-win lime"><header class="aa-win-bar"><span>Ask for something</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+              <label class="ui-field"><span>What do you need?</span><anvil-component type="TextBox" name="title_box" prop:placeholder="One line, like a headline"></anvil-component></label>
+              <label class="ui-field"><span>Why it matters <em>(optional)</em></span><anvil-component type="TextArea" name="body_box" prop:placeholder="Who is it for? What happens today without it?" prop:height="90"></anvil-component></label>
+              <anvil-component type="Button" name="send_button" prop:text="Send the request" prop:role='["btn", "btn-primary", "ic-megaphone"]'></anvil-component>
+            </div></section>
+            <section class="aa-win cyan"><header class="aa-win-bar"><span>The promise</span><i></i><i></i><i></i></header><div class="aa-win-body">
+              <div class="rq-hero"><svg class="aa-smiley" width="54" height="54" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg><anvil-component type="Label" name="promise" prop:role='["rq-promise"]'></anvil-component></div>
+              <anvil-component type="RepeatingPanel" name="kpi_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "rq-askkpis"]'></anvil-component>
+            </div></section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

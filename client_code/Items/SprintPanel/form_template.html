@@ -1,0 +1,14 @@
+<section class="aa-win"><header class="aa-win-bar"><span><anvil-component type="Label" name="stitle"></anvil-component></span><em><anvil-component type="Label" name="dates"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+  <anvil-component type="Label" name="goal" prop:role='["strong", "sp-goal"]'></anvil-component>
+  <div class="bl-cap" anvil:name="cap"><anvil-component type="Label" name="planned_pts"></anvil-component><anvil-component type="Label" name="vel"></anvil-component></div>
+  <div class="bl-capbar" title="Planned points against average velocity"><i anvil:name="fill"></i><b anvil:name="mark"></b></div>
+  <anvil-component type="Label" name="over_note" prop:text="Over your velocity. Commit less, finish more." prop:role='["msg-bad-text"]'></anvil-component>
+  <anvil-component type="Label" name="unest_note" prop:role='["fine-print"]'></anvil-component>
+  <anvil-component type="RepeatingPanel" name="cards_panel" prop:item_template="AutoAgile.Items.SprintCard" prop:role='["bl-sp-cards"]'></anvil-component>
+  <p class="small muted" anvil:name="empty">Empty. Use the arrow on a backlog card to add it here.</p>
+  <div class="ui-row" anvil:name="planned_acts">
+    <anvil-component type="Button" name="start_button" prop:text="Start sprint" prop:role='["btn", "btn-primary", "btn-sm", "ic-play"]'></anvil-component>
+    <anvil-component type="Button" name="remove_button" prop:text="Remove" prop:role='["btn", "btn-sm", "btn-danger"]'></anvil-component>
+  </div>
+  <a class="ui-btn sm" href="#plan" anvil:name="running_link">Running · see the burndown</a>
+</div></section>

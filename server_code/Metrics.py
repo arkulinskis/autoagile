@@ -230,7 +230,7 @@ def get_insights(team_id):
         return round(mean(w), 1) if w else None
     aging = [{"key": M.card_key(c), "id": c.get_id(), "title": c["title"], "status": c["status"], "age": M.days_since(c["moved_at"]),
               "agent": c["assignee_agent"] is not None} for c in cards if c["status"] in ("doing", "review")]
-    aging.sort(key=lambda a: -(a["age"] or 0))
+    aging.sort(key=lambda a: -float(a["age"] or 0))
     vr = velocity_range(vel)
     return {"level": t["level"] or 1, "throughput": weekly(done, 12), "cycle": cyc,
             "p50": round(percentile(days, 0.5), 1) if days else None, "p85": round(percentile(days, 0.85), 1) if days else None,

@@ -1,0 +1,34 @@
+---
+custom_component: true
+properties:
+  - name: answers
+    type: object
+    description: "{gate id: 0..3} to start from"
+    default_binding_prop: true
+  - name: cfg
+    type: object
+    description: The gates config (server Gates.config(), or aa.GATES_CFG); empty = the built-in copy
+events:
+  - name: gates_change
+    description: An answer changed (event_args answers, score)
+toolbox_item:
+  title: Complexity gates
+  group: AutoAgile
+help_text: Six questions light a points ladder (the same rules as server_code/Gates.py). key(n) answers the next gate (keys 1-4).
+---
+<div class="aa-gates">
+  <div class="aa-gate-rows">
+    <anvil-component type="RepeatingPanel" name="rows_panel" prop:item_template="AutoAgile.Items.GateRow"></anvil-component>
+  </div>
+  <div>
+    <div class="aa-ladder" aria-label="Points ladder">
+      <anvil-component type="RepeatingPanel" name="ladder_panel" prop:item_template="AutoAgile.Items.Rung" prop:role='["contents"]'></anvil-component>
+    </div>
+    <div class="aa-verdict">
+      <anvil-component type="Label" name="big" prop:role='["verdict-big"]'></anvil-component>
+      <anvil-component type="Label" name="fit_tag" prop:role='["aa-fit"]'></anvil-component>
+      <anvil-component type="Label" name="hint" prop:text="Answer every gate to light the ladder." prop:role='["fine-print"]'></anvil-component>
+      <anvil-component type="Label" name="notes" prop:role='["verdict-note"]'></anvil-component>
+    </div>
+  </div>
+</div>

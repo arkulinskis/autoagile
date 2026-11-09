@@ -1,0 +1,110 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="ui-empty" anvil:name="missing"><i class="ic ic-search"></i><anvil-component type="Label" name="missing_title" prop:role='["empty-title"]'></anvil-component><anvil-component type="Label" name="missing_text"></anvil-component><a class="ui-btn" href="#board">Back to the board</a></div>
+      <div anvil:name="page">
+        <div class="cd-top">
+          <a class="ui-btn ghost sm" href="#board"><i class="ic ic-back"></i>Board</a>
+          <anvil-component type="Label" name="key" prop:role='["cd-key"]'></anvil-component>
+          <anvil-component type="Label" name="type_tag" prop:role='["aa-type"]'></anvil-component>
+          <anvil-component type="Label" name="prio" prop:role='["aa-prio"]'></anvil-component>
+          <anvil-component type="Label" name="fit" prop:role='["aa-fit"]'></anvil-component>
+          <anvil-component type="Label" name="blocked_badge" prop:text="⛔ blocked" prop:role='["badge", "badge-bad"]'></anvil-component>
+          <anvil-component type="Label" name="demo_badge" prop:text="demo" prop:role='["badge"]'></anvil-component>
+          <span class="ui-spacer"></span>
+          <anvil-component type="Label" name="pts" prop:role='["aa-pts"]'></anvil-component>
+        </div>
+        <div class="cd-titlebox"><anvil-component type="TextBox" name="title_box" prop:role='["cd-title"]'></anvil-component></div>
+        <div class="cd-grid">
+          <div class="cd-main">
+            <section class="aa-win"><header class="aa-win-bar"><span>Description</span><em><anvil-component type="Label" name="desc_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <div anvil:name="body_view">
+                <anvil-component type="AutoAgile.Components.Md" name="body_md"></anvil-component>
+                <p class="muted" anvil:name="body_empty">No description yet. Agents need context: say what, why, and where in the code.</p>
+                <anvil-component type="Button" name="edit_button" prop:text="Edit" prop:role='["btn", "btn-sm", "ic-edit"]'></anvil-component>
+              </div>
+              <div class="ui-stack" anvil:name="body_edit">
+                <anvil-component type="TextArea" name="body_box" prop:placeholder="What and why. Markdown-ish: # heading, - list, **bold**, `code`, [link](https://...)" prop:height="180"></anvil-component>
+                <div class="ui-row end">
+                  <anvil-component type="Button" name="cancel_edit" prop:text="Cancel" prop:role='["btn", "btn-ghost"]'></anvil-component>
+                  <anvil-component type="Button" name="save_body" prop:text="Save" prop:role='["btn", "btn-primary"]'></anvil-component>
+                </div>
+              </div>
+            </div></section>
+            <section class="aa-win lime"><header class="aa-win-bar"><span>Acceptance criteria</span><em><anvil-component type="Label" name="acc_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="acc_panel" prop:item_template="AutoAgile.Items.AccRow" prop:role='["cd-acc"]'></anvil-component>
+              <div class="ui-row cd-accadd">
+                <anvil-component type="TextBox" name="acc_box" prop:placeholder="Add a criterion: observable, testable"></anvil-component>
+                <anvil-component type="Button" name="acc_add" prop:text="Add" prop:role='["btn", "btn-sm", "ic-plus"]'></anvil-component>
+              </div>
+            </div></section>
+            <section class="aa-win"><header class="aa-win-bar"><span>Complexity gates</span><em><anvil-component type="Label" name="gates_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="AutoAgile.Components.Gates" name="gates"></anvil-component>
+              <div class="ui-row end cd-gatesave">
+                <anvil-component type="Label" name="points_src" prop:role='["fine-print", "grow"]'></anvil-component>
+                <anvil-component type="Button" name="save_gates" prop:text="Save estimate" prop:enabled="false" prop:role='["btn", "btn-primary", "ic-gate"]'></anvil-component>
+              </div>
+            </div></section>
+            <section class="aa-win cyan"><header class="aa-win-bar"><span>Agent brief</span><em><anvil-component type="Label" name="brief_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <p class="small muted flat-top">One markdown spec with the goal, criteria, gates, your Definition of Done and the crew's house rules. Paste it into any AI coding tool, or let an agent fetch it with its token.</p>
+              <div class="ui-row">
+                <anvil-component type="Button" name="copy_brief" prop:text="Copy brief" prop:role='["btn", "btn-primary", "btn-sm", "ic-copy"]'></anvil-component>
+                <anvil-component type="Button" name="show_brief" prop:text="Preview" prop:role='["btn", "btn-sm"]'></anvil-component>
+              </div>
+              <anvil-component type="Label" name="brief_text" prop:role='["aa-pre", "cd-brief"]' prop:visible="false"></anvil-component>
+            </div></section>
+            <section class="aa-win"><header class="aa-win-bar"><span>Activity</span><em><anvil-component type="Label" name="act_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <div class="ui-stack cd-comment">
+                <anvil-component type="TextArea" name="comment_box" prop:placeholder="Comment, answer an agent's question, leave a review note" prop:height="70"></anvil-component>
+                <div class="ui-row end"><anvil-component type="Button" name="comment_button" prop:text="Comment" prop:role='["btn", "btn-sm", "btn-primary", "ic-chat"]'></anvil-component></div>
+              </div>
+              <anvil-component type="RepeatingPanel" name="events_panel" prop:item_template="AutoAgile.Items.EventRow" prop:role='["cd-tl"]'></anvil-component>
+              <p class="muted small" anvil:name="events_empty">No activity yet.</p>
+            </div></section>
+          </div>
+          <div class="cd-side">
+            <section class="aa-win lime"><header class="aa-win-bar"><span>Status</span><i></i><i></i><i></i></header><div class="aa-win-body">
+              <div class="cd-status" role="group" aria-label="Status">
+                <anvil-component type="Button" name="s_backlog" prop:text="Backlog" prop:role='["cd-st"]'></anvil-component>
+                <anvil-component type="Button" name="s_ready" prop:text="Ready" prop:role='["cd-st"]'></anvil-component>
+                <anvil-component type="Button" name="s_doing" prop:text="Doing" prop:role='["cd-st"]'></anvil-component>
+                <anvil-component type="Button" name="s_review" prop:text="Review" prop:role='["cd-st"]'></anvil-component>
+                <anvil-component type="Button" name="s_done" prop:text="Done" prop:role='["cd-st"]'></anvil-component>
+              </div>
+              <div class="ui-stack cd-review" anvil:name="review_box">
+                <anvil-component type="Button" name="approve" prop:text="Approve → Done" prop:role='["btn", "btn-primary", "btn-block", "ic-check"]'></anvil-component>
+                <anvil-component type="Button" name="send_back" prop:text="Send back to Doing" prop:role='["btn", "btn-block"]'></anvil-component>
+              </div>
+              <anvil-component type="Label" name="facts" prop:role='["cd-facts"]'></anvil-component>
+            </div></section>
+            <section class="aa-win"><header class="aa-win-bar"><span>Details</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+              <label class="ui-field"><span>Assignee</span><anvil-component type="DropDown" name="f_assignee"></anvil-component></label>
+              <label class="ui-field"><span>Type</span><anvil-component type="DropDown" name="f_type"></anvil-component></label>
+              <label class="ui-field"><span>Priority</span><anvil-component type="DropDown" name="f_priority"></anvil-component></label>
+              <label class="ui-field"><span>Epic</span><anvil-component type="DropDown" name="f_epic"></anvil-component></label>
+              <label class="ui-field" anvil:name="sprint_field"><span>Sprint</span><anvil-component type="DropDown" name="f_sprint"></anvil-component></label>
+              <label class="ui-field"><span>Points by hand</span><anvil-component type="DropDown" name="f_points"></anvil-component></label>
+              <label class="ui-field"><span>Labels <em>(comma separated)</em></span><anvil-component type="TextBox" name="f_labels"></anvil-component></label>
+              <anvil-component type="CheckBox" name="f_blocked" prop:text="Blocked"></anvil-component>
+              <anvil-component type="TextBox" name="f_reason" prop:placeholder="Blocked by what?"></anvil-component>
+            </div></section>
+            <section class="aa-win cyan"><header class="aa-win-bar"><span>Agent readiness</span><em><anvil-component type="Label" name="ready_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="ready_panel" prop:item_template="AutoAgile.Items.ReadyRow" prop:role='["cd-ready"]'></anvil-component>
+              <anvil-component type="Label" name="ready_note" prop:role='["fine-print", "cd-readynote"]'></anvil-component>
+            </div></section>
+            <section class="aa-win"><header class="aa-win-bar"><span>Links</span><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="links_panel" prop:item_template="AutoAgile.Items.LinkRow" prop:role='["cd-links"]'></anvil-component>
+              <p class="small muted flat-top" anvil:name="links_empty">PRs, designs, docs. Agents add their PRs when they hand in.</p>
+              <div class="ui-stack">
+                <anvil-component type="TextBox" name="link_label" prop:placeholder="Label (PR #12)"></anvil-component>
+                <anvil-component type="TextBox" name="link_url" prop:placeholder="https://..."></anvil-component>
+                <anvil-component type="Button" name="link_add" prop:text="Add link" prop:role='["btn", "btn-sm", "ic-plus"]'></anvil-component>
+              </div>
+            </div></section>
+            <anvil-component type="Button" name="delete_button" prop:text="Delete card" prop:role='["btn", "btn-danger", "ic-trash"]'></anvil-component>
+          </div>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

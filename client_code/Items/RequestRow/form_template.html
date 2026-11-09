@@ -1,0 +1,19 @@
+<article class="rq-item">
+  <anvil-component type="Button" name="vote" prop:role='["rq-vote"]'></anvil-component>
+  <div>
+    <anvil-component type="Label" name="title" prop:role='["rq-title"]' bind:text="self.item['title']"></anvil-component>
+    <div class="rq-meta">
+      <anvil-component type="Label" name="st" prop:role='["rq-st"]'></anvil-component>
+      <anvil-component type="Label" name="by" prop:role='["inline"]'></anvil-component>
+      <a href="#board" anvil:name="card_link"><anvil-component type="Label" name="card_text" prop:role='["inline"]'></anvil-component></a>
+    </div>
+    <anvil-component type="Label" name="body" prop:role='["rq-body"]' bind:text="self.item['body']"></anvil-component>
+    <div class="rq-answer" anvil:name="answer_box"><anvil-component type="Label" name="ans_head" prop:role='["rq-anshead"]'></anvil-component><anvil-component type="Label" name="ans_text"></anvil-component></div>
+    <div class="rq-acts" anvil:name="acts">
+      <anvil-component type="Button" name="accept" prop:text="Accept" prop:role='["btn", "btn-sm", "btn-primary", "ic-check"]'></anvil-component>
+      <anvil-component type="Button" name="later" prop:text="Later" prop:role='["btn", "btn-sm"]'></anvil-component>
+      <anvil-component type="Button" name="decline" prop:text="Decline" prop:role='["btn", "btn-sm", "btn-danger"]'></anvil-component>
+      <anvil-component type="Button" name="reopen" prop:text="Reopen" prop:role='["btn", "btn-sm", "btn-ghost"]'></anvil-component>
+    </div>
+  </div>
+</article>

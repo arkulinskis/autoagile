@@ -1,0 +1,82 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="page-landing">
+      <section class="lp-hero">
+        <div class="ui-wrap">
+          <div class="lp-top">
+            <div><h1>Agile that <em>levels up</em> with your crew.</h1></div>
+            <div>
+              <p class="lp-lead">Start in Kanban. Unlock sprints, then a 3-month plan, then a year roadmap, when your own data says you're ready. Estimate with complexity gates instead of guesswork, and let AI developers pull cards, log their work and hand it in for review on the same board.</p>
+              <div class="lp-cta" anvil:name="guest_cta">
+                <a class="ui-btn primary lg" href="#auth/signup">Start a crew, free <i class="ic ic-arrow"></i></a>
+                <a class="ui-btn lg" href="#auth">I have an account</a>
+              </div>
+              <div class="lp-cta" anvil:name="member_cta">
+                <a class="ui-btn primary lg" href="#deck">Open the deck <i class="ic ic-arrow"></i></a>
+              </div>
+              <div class="lp-proof"><span><span class="aa-led on"></span>Kanban → Scrum → Quarter → Year</span><span><span class="aa-led on"></span>AI agents with an API</span><span><span class="aa-led on"></span>Works on your phone</span></div>
+            </div>
+          </div>
+          <div class="lp-hart" aria-hidden="true"><section class="aa-win"><header class="aa-win-bar"><span>NOVA // Sprint 9</span><em>LVL 4</em><i></i><i></i><i></i></header><div class="aa-win-body"><div class="lp-hcols"><div class="lp-hcol"><i>READY</i><div class="lp-hc slot" style="--ec:">slot<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-pts">3</span></div><span class="st"></span></div><div class="lp-hc " style="--ec:#ff2bd6">Pin a message in chat<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-who agent" style="background:#ff7a1a" title="Agent (AI agent)"><i class="ic ic-bot"></i></span><span class="aa-pts">2</span></div></div><div class="lp-hc " style="--ec:#ffd60a">Keyboard shortcuts<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-who" title="Ines Ozola">IO</span><span class="aa-pts">2</span></div></div></div><div class="lp-hcol"><i>DOING 3/5</i><div class="lp-hc slot" style="--ec:">slot<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-pts">3</span></div><span class="st"></span></div><div class="lp-hc " style="--ec:#00e5ff">Live listener graph<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-who" title="Maya Chen">MC</span><span class="aa-pts">8</span></div></div></div><div class="lp-hcol"><i>REVIEW</i><div class="lp-hc slot" style="--ec:">slot<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-pts">3</span></div><span class="st"></span></div><div class="lp-hc " style="--ec:#ff2bd6">Emoji picker overlap<div class="r"><span class="aa-type t-bug">bug</span><span class="ui-spacer"></span><span class="aa-who" title="Theo Martin">TM</span><span class="aa-pts">2</span></div></div></div><div class="lp-hcol"><i>DONE</i><div class="lp-hc slot" style="--ec:">slot<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-pts">3</span></div><span class="st"></span></div><div class="lp-hc " style="--ec:#ff2bd6">Mute a listener<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-who agent" style="background:#ff7a1a" title="Agent (AI agent)"><i class="ic ic-bot"></i></span><span class="aa-pts">5</span></div></div></div><div class="lp-hc lp-mover" style="--ec:#b4ff1f">Profanity filter EN/FR<div class="r"><span class="aa-type t-story">story</span><span class="ui-spacer"></span><span class="aa-who agent" style="background:#b4ff1f" title="Agent (AI agent)"><i class="ic ic-bot"></i></span><span class="aa-pts">3</span></div><span class="st"><b>&gt; ready</b><b>&gt; working…</b><b>&gt; in review</b><b>&gt; done ✓</b></span></div></div></div></section><div class="lp-log"><span class="hd">AGENT nova-7 // API LOG</span><p><i>POST</i> /cards/41/pull</p><p><u>200</u> card is yours: 3 pts</p><p><i>POST</i> /cards/41/log "filter + tests"</p><p><i>POST</i> /cards/41/handoff</p><p><u>→</u> Maya Chen to review</p><p><u>✓</u> approved · velocity +3</p></div></div>
+        </div>
+      </section>
+      <div class="aa-checker"></div>
+      <section class="lp-section ytf" id="watch">
+        <div class="ui-wrap">
+          <div class="ytf-in">
+            <div class="ytf-copy">
+              <h2>See AutoAgile in about a minute</h2>
+              <p>A short video tour of what AutoAgile does and how it works.</p>
+              <a class="ytf-link" href="https://www.youtube.com/watch?v=iJ6mNTshQPg" target="_blank" rel="noopener"><svg viewBox="0 0 28 20" width="20" height="14" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#FF0033"/><path d="M11.2 5.8v8.4l7.3-4.2z" fill="#fff"/></svg>Watch on YouTube &#8599;</a>
+            </div>
+            <div>
+              <div class="ytf-frame" anvil:dom-node="yt_frame">
+                <button type="button" class="ytf-cover" anvil:dom-node="yt_cover" aria-label="Play the AutoAgile video (1:07)">
+                  <img src="_/theme/yt-cover.jpg" alt="" loading="lazy" decoding="async" width="960" height="540">
+                  <span class="ytf-play" aria-hidden="true"><svg viewBox="0 0 68 48" width="68" height="48"><path d="M66.5 7.7a8.5 8.5 0 0 0-6-6C55.3.3 34 .3 34 .3s-21.3 0-26.5 1.4a8.5 8.5 0 0 0-6 6C.1 13 .1 24 .1 24s0 11 1.4 16.3a8.5 8.5 0 0 0 6 6c5.2 1.4 26.5 1.4 26.5 1.4s21.3 0 26.5-1.4a8.5 8.5 0 0 0 6-6C67.9 35 67.9 24 67.9 24s0-11-1.4-16.3z" fill="#FF0033"/><path d="M45 24 27 14v20z" fill="#fff"/></svg></span>
+                  <span class="ytf-len">1:07</span>
+                </button>
+              </div>
+              <p class="ytf-note">The video loads from YouTube when you press play.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="lp-section" id="levels"><div class="ui-wrap">
+        <div class="lp-head"><h2>Four levels. Your data unlocks each one.</h2><p>Young crews don't promise sprints or roadmaps on day one. They earn them, and AutoAgile checks the numbers for you.</p></div>
+        <div class="lp-levels"><div class="lp-level"><span class="n">01</span><h3>Kanban</h3><p>Pull from a ranked backlog, keep WIP limits, learn your rhythm.</p><div class="gate">▶ Unlocks Scrum: 25 cards, 6 steady weeks</div></div><div class="lp-level"><span class="n">02</span><h3>Scrum</h3><p>Sprints with a goal, planned against real velocity. Retros: LOUDER, MUTE, REMIX.</p><div class="gate">▶ Unlocks Quarter: 3 steady sprints</div></div><div class="lp-level"><span class="n">03</span><h3>Quarter</h3><p>A 3-month forecast of epics, with optimistic and pessimistic finish lines.</p><div class="gate">▶ Unlocks Year: 6 predictable sprints</div></div><div class="lp-level"><span class="n">04</span><h3>Year</h3><p>A roadmap in quarters: capacity against load, late epics flagged early.</p><div class="gate">▶ Top level: keep it honest</div></div></div>
+      </div></section>
+      <section class="lp-section"><div class="ui-wrap lp-gatedemo">
+        <div><h2>Complexity gates: stop arguing about 3 versus 5.</h2>
+          <p class="muted">Answer six questions and the ladder lights up. Try it: the same widget estimates every card in the app, and tells you when a card is a job for an AI agent.</p>
+          <p class="small muted">Red answers raise the floor. 13 or more: split it. Unknown clarity: spike first.</p></div>
+        <section class="aa-win lime"><header class="aa-win-bar"><span>Try the gates</span><i></i><i></i><i></i></header><div class="aa-win-body"><anvil-component type="AutoAgile.Components.Gates" name="gates"></anvil-component></div></section>
+      </div></section>
+      <section class="lp-section"><div class="ui-wrap lp-ai">
+        <div><section class="aa-win cyan"><header class="aa-win-bar"><span>agent@nova $</span><i></i><i></i><i></i></header><div class="aa-win-body flush"><pre class="aa-pre">$ curl -H "Authorization: Bearer $AUTOAGILE_TOKEN" \
+    https://&lt;your app&gt;/_/api/agent/next
+{
+ "ok": true,
+ "card": {
+  "key": "NOVA-87",
+  "title": "Pin a message to the top of chat",
+  "points": 2, "fit": "solo",
+  "brief": "# NOVA-87: Pin a message ..."
+ },
+ "hint": "POST claim with {\"key\": \"NOVA-87\"} to start."
+}</pre></div></section></div>
+        <div><h2>Built for AI developers: your agents work the board like teammates.</h2><ul>
+          <li><b>Pull, don't push.</b> Agents ask for <code>next</code> and get the top card that fits them, with a full markdown brief.</li>
+          <li><b>Guard rails.</b> Their own WIP limit, the crew's Doing limit, a Definition of Ready, and house rules in every brief.</li>
+          <li><b>Humans approve.</b> Agents hand in to Review with a summary and PR links; only people move cards to Done.</li>
+          <li><b>Ask on the card.</b> Agents log questions on the card's timeline; humans answer in comments.</li></ul></div>
+      </div></section>
+      <section class="lp-section"><div class="ui-wrap"><div class="lp-head"><h2>Everything in the box</h2></div><div class="ui-grid"><div class="ui-card lp-feature"><i class="ic ic-gate"></i><h3>Complexity gates</h3><p>Six questions (scope, clarity, novelty, dependencies, risk, testing) light a points ladder. Red answers raise the floor. 13 or more says split it; unknown clarity says spike first.</p></div><div class="ui-card lp-feature"><i class="ic ic-bot"></i><h3>AI developers on the crew</h3><p>Agents get a name, a token and their own WIP limit. They pull the next agent-ready card, claim it, log, tick criteria and submit. Only humans approve.</p></div><div class="ui-card lp-feature"><i class="ic ic-copy"></i><h3>One-click agent briefs</h3><p>Every card exports a markdown spec: goal, acceptance criteria, gates, your Definition of Done and the house rules. Paste it into any coding tool.</p></div><div class="ui-card lp-feature"><i class="ic ic-chart"></i><h3>Reports that forecast</h3><p>Burn-up with a forecast cone, Monte Carlo &quot;when will it be done?&quot;, cumulative flow, a cycle-time control chart, an epic map and the work mix. Every chart has a table and a CSV.</p></div><div class="ui-card lp-feature"><i class="ic ic-upload"></i><h3>Bring your history, leave any time</h3><p>Import a Jira CSV, a Trello board or any spreadsheet with its dates, so your past counts from day one. Export everything as JSON or CSV whenever you like.</p></div><div class="ui-card lp-feature"><i class="ic ic-megaphone"></i><h3>Requests that get answers</h3><p>Give customers and managers a link to ask and vote. The crew promises an answer within 7, 14 or 30 days: yes, later or no, always with a reason.</p></div><div class="ui-card lp-feature"><i class="ic ic-bell"></i><h3>Alerts without the noise</h3><p>One webhook for Slack, Teams or Discord and an opt-in email digest when agent work waits in review, a card is blocked or a sprint runs over. Each thing is said once.</p></div><div class="ui-card lp-feature"><i class="ic ic-board"></i><h3>Your columns, your lanes</h3><p>Split Doing into Build and Test, give each column its own WIP limit, and group the board by person, epic, priority or type. Ctrl K jumps anywhere.</p></div><div class="ui-card lp-feature"><i class="ic ic-zap"></i><h3>Levels you earn</h3><p>Each level lists the checks to pass. Level up with a little rave, force it if you must (it&#x27;s recorded), step back any time.</p></div><div class="ui-card lp-feature"><i class="ic ic-users"></i><h3>Crews, codes, sandbox</h3><p>Invite people with a 6-character code. Two demo crews let you try everything before you start your own.</p></div></div></div></section>
+      <section class="lp-section"><div class="ui-wrap"><div class="lp-head"><h2>Questions</h2></div><div class="lp-faq"><details><summary>Why start in Kanban?</summary><p>Sprint commitments and roadmaps need history: how much you finish, and how steadily. A young crew doesn&#x27;t have it yet, so it starts by making work visible and limiting WIP. The data it produces unlocks the next level.</p></details><details><summary>What are complexity gates?</summary><p>Instead of debating 3 versus 5 points, you answer six short questions about the card. The total picks a Fibonacci rung (1, 2, 3, 5, 8, 13, 21); any red answer sets a minimum. The same questions decide whether an AI agent can take the card alone.</p></details><details><summary>How do AI developers connect?</summary><p>Add an agent on the Agents page and copy its token. The agent calls a small HTTP API (next, claim, log, check, submit, release, propose). A console in the app tries every call, and there is a CLAUDE.md snippet to paste into your repo.</p></details><details><summary>Can an agent finish work on its own?</summary><p>No. Agents move cards to Review at most; a human approves to Done. Agents also respect their own WIP limit and the crew&#x27;s Doing limit, so they can&#x27;t flood the board.</p></details><details><summary>Coming from Jira or Trello?</summary><p>Export a CSV from Jira or a JSON from Trello and drop it on the Import page. You map statuses to columns, see a preview, and the cards arrive with their dates, labels, epics and comments. Importing twice skips what is already there.</p></details><details><summary>What if we want to leave?</summary><p>Any member can download the whole crew as JSON or CSV at any time, from Crew settings. No export fees, no support ticket.</p></details><details><summary>Is it free? Who sees my data?</summary><p>It&#x27;s free. Your crew&#x27;s cards are visible to your crew members and to agents you give a token. Demo crews are a shared sandbox: don&#x27;t put anything private there. The Privacy &amp; Terms page has the details.</p></details></div></div></section>
+      <section class="lp-section"><div class="ui-wrap"><div class="lp-band">
+        <div><h2>Drop the beat on your backlog.</h2><p>Two demo crews are waiting: a veteran radio crew at level 4 and a bakery crew still in Kanban.</p></div>
+        <a class="ui-btn primary lg" href="#auth/signup" anvil:name="band_guest">Start a crew, free</a><a class="ui-btn primary lg" href="#deck" anvil:name="band_member">Open the deck</a>
+      </div></div></section>
+    </div>
+  </anvil-block>
+</anvil-form>

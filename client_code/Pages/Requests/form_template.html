@@ -1,0 +1,47 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><h1 class="aa-h1">Requests</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row"><a class="ui-btn" href="#requests" anvil:name="ask_link"><i class="ic ic-megaphone"></i>What requesters see</a></div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <anvil-component type="RepeatingPanel" name="kpi_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "rq-kpis"]'></anvil-component>
+      <div class="rq-grid">
+        <div class="ui-stack">
+          <section class="aa-win" anvil:name="open_win"><header class="aa-win-bar"><span>Waiting for an answer</span><em><anvil-component type="Label" name="open_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="open_panel" prop:item_template="AutoAgile.Items.RequestRow"></anvil-component>
+            <p class="muted small flat" anvil:name="open_empty">Inbox zero. <svg class="aa-smiley" width="20" height="20" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg> Share the link so people can ask.</p>
+          </div></section>
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Answered</span><em><anvil-component type="Label" name="done_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="done_panel" prop:item_template="AutoAgile.Items.RequestRow"></anvil-component>
+            <p class="muted small flat" anvil:name="done_empty">Answers show up here, with how long each took.</p>
+          </div></section>
+        </div>
+        <div class="ui-stack">
+          <section class="aa-win lime"><header class="aa-win-bar"><span>Share the ask link</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat-top">Anyone signed in with this link can add requests and vote. They see the requests and your answers, never the board.</p>
+            <anvil-component type="Label" name="link" prop:role='["rq-link"]'></anvil-component>
+            <div class="ui-row rq-linkacts">
+              <anvil-component type="Button" name="copy_link" prop:text="Copy link" prop:role='["btn", "btn-sm", "ic-copy"]'></anvil-component>
+              <anvil-component type="Button" name="new_link" prop:text="New link" prop:role='["btn", "btn-sm", "ic-refresh"]'></anvil-component>
+            </div>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>Answer promise</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat-top">How long people wait, at most, before the crew answers. Overdue requests show on the Deck and can alert the crew.</p>
+            <div class="ui-seg" role="group" aria-label="Answer promise">
+              <anvil-component type="Button" name="p7" prop:text="7 days" prop:role='["seg"]'></anvil-component>
+              <anvil-component type="Button" name="p14" prop:text="14 days" prop:role='["seg"]'></anvil-component>
+              <anvil-component type="Button" name="p30" prop:text="30 days" prop:role='["seg"]'></anvil-component>
+            </div>
+          </div></section>
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Add one for someone</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+            <label class="ui-field"><span>Title</span><anvil-component type="TextBox" name="title_box" prop:placeholder="What do they need?"></anvil-component></label>
+            <label class="ui-field"><span>Details <em>(optional)</em></span><anvil-component type="TextArea" name="body_box" prop:placeholder="Who asked, why it matters" prop:height="70"></anvil-component></label>
+            <anvil-component type="Button" name="add_button" prop:text="Add request" prop:role='["btn", "btn-sm", "btn-primary", "ic-plus"]'></anvil-component>
+          </div></section>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

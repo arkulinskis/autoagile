@@ -1,0 +1,36 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><anvil-component type="Label" name="title" prop:role='["page-title"]'></anvil-component><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row"><a class="ui-btn" href="#crew/join" anvil:name="switch_link"><anvil-component type="Label" name="switch_text" prop:role='["inline"]'></anvil-component></a></div>
+      </div>
+      <div class="cr-start">
+        <section class="aa-win lime" anvil:name="join_win"><header class="aa-win-bar"><span>Join with a code</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+          <label class="ui-field"><span>Crew code</span><anvil-component type="TextBox" name="code_box" prop:placeholder="K7Q2XM" prop:role='["cr-codein"]'></anvil-component></label>
+          <anvil-component type="Button" name="join_button" prop:text="Join" prop:role='["btn", "btn-primary", "ic-key"]'></anvil-component>
+        </div></section>
+        <section class="aa-win lime" anvil:name="new_win"><header class="aa-win-bar"><span>New crew</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+          <label class="ui-field"><span>Crew name</span><anvil-component type="TextBox" name="name_box" prop:placeholder="Nova FM, Pixel Bakery, Team Rocket"></anvil-component></label>
+          <label class="ui-field"><span>Card prefix <em>(2-5 letters: cards become PREFIX-1, PREFIX-2...)</em></span><anvil-component type="TextBox" name="key_box" prop:placeholder="NOVA" prop:role='["cr-keyin"]'></anvil-component></label>
+          <label class="ui-field"><span>Mission <em>(optional)</em></span><anvil-component type="TextArea" name="mission_box" prop:placeholder="What are you building, for whom?" prop:height="60"></anvil-component></label>
+          <div class="ui-field cr-levelpick"><span>Where do you start?</span>
+            <div class="ui-choices">
+              <anvil-component type="RadioButton" name="lvl1" prop:text="LVL 1 · KANBAN: new crew, or new to agile. Recommended." prop:group_name="lvl" prop:value="1" prop:selected="true"></anvil-component>
+              <anvil-component type="RadioButton" name="lvl2" prop:text="LVL 2 · SCRUM: we already run sprints together." prop:group_name="lvl" prop:value="2"></anvil-component>
+            </div>
+            <p class="ui-hint">Quarter and year planning unlock from your own data, whatever you pick.</p>
+          </div>
+          <anvil-component type="Button" name="create_button" prop:text="Start the crew" prop:role='["btn", "btn-primary", "btn-lg", "ic-zap"]'></anvil-component>
+        </div></section>
+        <section class="aa-win cyan"><header class="aa-win-bar"><span>The four levels</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+          <p class="flat"><b>1 · KANBAN.</b> <span class="muted">Young crews start here: a ranked backlog, a board, WIP limits. You learn your rhythm before you promise anything.</span></p>
+          <p class="flat"><b>2 · SCRUM.</b> <span class="muted">When 25 cards and 6 steady weeks are done: sprints with goals, planned against real velocity, and retros.</span></p>
+          <p class="flat"><b>3 · QUARTER.</b> <span class="muted">After 3 steady sprints: a 3-month forecast of epics with a confidence range.</span></p>
+          <p class="flat"><b>4 · YEAR.</b> <span class="muted">After 6 predictable sprints: a year roadmap in quarters, estimated from measured capacity.</span></p>
+          <p class="small flat"><svg class="aa-smiley" width="22" height="22" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg> Complexity gates estimate every card the same way, so points mean something by the time you plan a year.</p>
+        </div></section>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

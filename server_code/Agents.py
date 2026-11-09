@@ -264,7 +264,7 @@ def agent_op(a, op, data=None, base=None):
     if op == "check":
         acc = list(c["acceptance"] or [])
         try:
-            i = int(data.get("index"))
+            i = int(data.get("index", "-"))  # a missing index fails like None did
         except (TypeError, ValueError):
             return _err("index is the criterion's number, starting at 0.")
         if not 0 <= i < len(acc):

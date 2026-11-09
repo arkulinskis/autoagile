@@ -1,0 +1,85 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><anvil-component type="Label" name="title" prop:role='["page-title"]'></anvil-component><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row"><a class="ui-btn" href="#crew/new"><i class="ic ic-plus"></i>New crew</a><a class="ui-btn" href="#crew/join"><i class="ic ic-key"></i>Join</a></div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <div class="cr-grid">
+        <div class="ui-stack">
+          <section class="aa-win lime"><header class="aa-win-bar"><span>Crew</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+            <label class="ui-field"><span>Name</span><anvil-component type="TextBox" name="name_box"></anvil-component></label>
+            <label class="ui-field"><span>Mission</span><anvil-component type="TextArea" name="mission_box" prop:height="60"></anvil-component></label>
+            <anvil-component type="Label" name="prefix" prop:role='["fine-print"]'></anvil-component>
+            <div class="ui-row end" anvil:name="basic_save"><anvil-component type="Button" name="save_basic" prop:text="Save" prop:role='["btn", "btn-primary", "btn-sm"]'></anvil-component></div>
+            <p class="small muted flat" anvil:name="owner_only">Only the owner changes these.</p>
+          </div></section>
+          <section class="aa-win cyan" anvil:name="invite_win"><header class="aa-win-bar"><span>Invite people</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat-top">Share this code. Anyone signed in can join with it on the Join page.</p>
+            <div class="ui-row"><anvil-component type="Label" name="code" prop:role='["cr-code"]'></anvil-component>
+              <anvil-component type="Button" name="copy_code" prop:text="Copy" prop:role='["btn", "btn-sm", "ic-copy"]'></anvil-component>
+              <anvil-component type="Button" name="new_code" prop:text="New code" prop:role='["btn", "btn-sm", "ic-refresh"]'></anvil-component></div>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>People</span><em><anvil-component type="Label" name="people_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="members_panel" prop:item_template="AutoAgile.Items.MemberRow"></anvil-component>
+          </div></section>
+        </div>
+        <div class="ui-stack">
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Flow rules</span><i></i><i></i><i></i></header><div class="aa-win-body ui-stack">
+            <div class="ui-field"><span>WIP limits <em>(cards allowed per stage; agents respect these)</em></span>
+              <div class="cr-wip">
+                <label class="ui-field"><span class="small">Ready</span><anvil-component type="TextBox" name="wip_ready" prop:type="number"></anvil-component></label>
+                <label class="ui-field"><span class="small">Doing</span><anvil-component type="TextBox" name="wip_doing" prop:type="number"></anvil-component></label>
+                <label class="ui-field"><span class="small">Review</span><anvil-component type="TextBox" name="wip_review" prop:type="number"></anvil-component></label>
+              </div>
+            </div>
+            <label class="ui-field"><span>Sprint length</span><anvil-component type="DropDown" name="sprint_days"></anvil-component></label>
+            <label class="ui-field"><span>Definition of Done <em>(one rule per line; every agent brief includes it)</em></span><anvil-component type="TextArea" name="dod_box" prop:height="110"></anvil-component></label>
+            <div class="ui-row end"><anvil-component type="Button" name="save_flow" prop:text="Save flow rules" prop:role='["btn", "btn-primary", "btn-sm"]'></anvil-component></div>
+          </div></section>
+          <section class="aa-win lime"><header class="aa-win-bar"><span>Board columns</span><em><anvil-component type="Label" name="cols_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat-top">Split a stage into steps, like Doing → Build and Test. Agents, level checks and reports keep working on the stage. A column's WIP limit counts only that column; the Flow rules limit counts the whole stage.</p>
+            <anvil-component type="RepeatingPanel" name="cols_panel" prop:item_template="AutoAgile.Items.ColumnRow"></anvil-component>
+            <div class="ui-row cr-colacts">
+              <anvil-component type="Button" name="add_col" prop:text="Add a column" prop:role='["btn", "btn-sm", "ic-plus"]'></anvil-component>
+              <span class="ui-spacer"></span>
+              <anvil-component type="Button" name="save_cols" prop:text="Save columns" prop:role='["btn", "btn-sm", "btn-primary"]'></anvil-component>
+            </div>
+          </div></section>
+          <section class="aa-win warn"><header class="aa-win-bar"><span>Alerts</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <div class="ui-stack" anvil:name="alert_form">
+              <label class="ui-field"><span>Webhook <em>(Slack, Teams, Mattermost, Discord or your own server; https only)</em></span><anvil-component type="TextBox" name="webhook" prop:placeholder="https://hooks.slack.com/services/..."></anvil-component></label>
+              <div class="cr-wip two">
+                <label class="ui-field"><span class="small">Format</span><anvil-component type="DropDown" name="format_box"></anvil-component></label>
+                <label class="ui-field"><span class="small">Review waits over (hours)</span><anvil-component type="TextBox" name="review_hours" prop:type="number"></anvil-component></label>
+              </div>
+              <div class="ui-field"><span>Send an alert when</span><anvil-component type="RepeatingPanel" name="kinds_panel" prop:item_template="AutoAgile.Items.KindCheck" prop:role='["cr-kinds"]'></anvil-component></div>
+              <div class="ui-row end">
+                <anvil-component type="Button" name="test_alert" prop:text="Send a test" prop:role='["btn", "btn-sm"]'></anvil-component>
+                <anvil-component type="Button" name="save_alerts" prop:text="Save alerts" prop:role='["btn", "btn-sm", "btn-primary"]'></anvil-component>
+              </div>
+            </div>
+            <anvil-component type="Label" name="alert_info" prop:role='["fine-print"]'></anvil-component>
+            <anvil-component type="CheckBox" name="notify_box" prop:text="Email me when something needs a human (one digest, never a flood)"></anvil-component>
+            <h3 class="cr-h">Recent alerts</h3>
+            <anvil-component type="RepeatingPanel" name="hist_panel" prop:item_template="AutoAgile.Items.AlertHistRow"></anvil-component>
+            <p class="small muted" anvil:name="hist_empty">Nothing yet. Quiet is good.</p>
+          </div></section>
+          <section class="aa-win"><header class="aa-win-bar"><span>Requests, import, export</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small flat-top">Give people outside the crew a link to ask for things, with an answer promise. Bring your Jira or Trello history in, and take everything out whenever you like.</p>
+            <div class="ui-row"><a class="ui-btn sm" href="#requests"><i class="ic ic-megaphone"></i>Request desk</a><a class="ui-btn sm" href="#import"><i class="ic ic-upload"></i>Import and export</a></div>
+          </div></section>
+          <section class="aa-win warn"><header class="aa-win-bar"><span>Leave or delete</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat" anvil:name="demo_leave">Demo crews are shared sandboxes. An admin can reset them from Admin → Demo data.</p>
+            <div anvil:name="owner_delete">
+              <anvil-component type="Label" name="delete_text" prop:role='["fine-print"]'></anvil-component>
+              <div class="ui-row"><anvil-component type="TextBox" name="confirm_box" prop:role='["cr-confirm"]'></anvil-component><anvil-component type="Button" name="delete_button" prop:text="Delete crew" prop:role='["btn", "btn-danger", "btn-solid", "btn-sm", "ic-trash"]'></anvil-component></div>
+            </div>
+            <anvil-component type="Button" name="leave_button" prop:text="Leave this crew" prop:role='["btn", "btn-danger", "ic-logout"]'></anvil-component>
+          </div></section>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>
