@@ -1,6 +1,6 @@
 /* Smoke test (tools/ui_test.py --only smoke.js): every page address opens without a JavaScript or Python error and
    without an empty page: signed out, then as a new member (who lands in the demo crews), then as the admin
-   (arkulinskis@gmail.com becomes admin on sign-up; ui_test.py starts from an empty local database). Resolves to {ok, log}. */
+   (admin@example.com becomes admin on sign-up; ui_test.py starts from an empty local database). Resolves to {ok, log}. */
 (async function () {
   const log = [], bad = [];
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -94,7 +94,7 @@
     await signOut();
 
     // the admin
-    await signUp('Admin Tester', 'arkulinskis@gmail.com', 'Local-smoke-Admin-7Qx-' + location.port);  // local test database only
+    await signUp('Admin Tester', 'admin@example.com', 'Local-smoke-Admin-7Qx-' + location.port);  // local test database only
     for (const h of ['#admin/overview', '#admin/feedback', '#admin/users', '#admin/crews', '#admin/demo', '#deck']) await open(h);
     log.push(bad.length ? 'PROBLEMS: ' + bad.join(' || ') : 'PASSED');
     return { ok: !bad.length, log: log };

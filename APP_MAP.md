@@ -48,7 +48,7 @@ around them with an offset instead of whole files.
 - **CSS:** app.css was composed from the template core + the old core.css skin + every page's styles; the Forms
   additions are the last block ("AutoAgile as native Forms"). Labels inherit their font from their role
   (`.anvil-label > span { font: inherit }`), so old `.x span` rules no longer style Label text: give the Label a role.
-- **Tests:** `tools/ui/smoke.js` (signed out, member in the demo crews, admin = arkulinskis@gmail.com signed up in the
+- **Tests:** `tools/ui/smoke.js` (signed out, member in the demo crews, admin = your admin email (App Secret `admin_emails`) signed up in the
   local database with a fixed local password). `python -I tools/ui_test.py` runs it; a11y.js/design.js on request.
 - **Validator:** dialog arguments are popped from `**properties` (a `None` default is typed None for good);
   `aa.loose()` hands mixed dicts on untyped. Never re-annotate a parameter (`cfg: dict = cfg or X` is a NameError in Skulpt).
