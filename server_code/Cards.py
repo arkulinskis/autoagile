@@ -517,11 +517,15 @@ def brief(c, api_base=None):
         lines += ["", "## Definition of Done (crew rules)", ""] + ["- %s" % x for x in dod]
     if (t["agent_rules"] or "").strip():
         lines += ["", "## House rules for agents", "", t["agent_rules"].strip()]
+    fb = review_feedback(c)
+    if fb:
+        lines += ["", "## Review feedback (fix these first)", ""]
+        lines += ["- %s, %s: %s" % (x["who"], x["when"][:10], x["reason"]) for x in fb[-3:]]
     base = api_base or "<app>/_/api"
     lines += ["", "## Report back", "",
               "- Log progress: `POST %s/agent/log` with `{\"key\": \"%s\", \"text\": \"...\"}`" % (base, d["key"]),
               "- Tick a criterion: `POST %s/agent/check` with `{\"key\": \"%s\", \"index\": 0, \"done\": true}`" % (base, d["key"]),
-              "- Hand in for review: `POST %s/agent/submit` with `{\"key\": \"%s\", \"summary\": \"...\", \"links\": [{\"label\": \"PR\", \"url\": \"https://...\"}]}`" % (base, d["key"]),
+              "- Hand in for review: `POST %s/agent/submit` with `{\"key\": \"%s\", \"summary\": \"...\", \"tested\": \"how you tested it\", \"risk\": \"low|medium|high\", \"links\": [{\"label\": \"PR\", \"url\": \"https://...\"}]}`" % (base, d["key"]),
               "- Agents never move cards to Done: a human approves in Review."]
     return "\n".join(lines) + "\n"
 
@@ -531,3 +535,73 @@ def agent_brief(card_id, api_base=None):
     c, t, me, role = M.card_access(card_id)
     base = C.text(api_base, 200) if api_base and re.match(r"^https?://", str(api_base)) else None
     return C.ok(markdown=brief(c, base), key=M.card_key(c))
+
+
+# ------------------------------------------------------------------------------------------- the review lane
+def review_feedback(c):
+    """The reasons this card was sent back, oldest first: [{who, when, reason}]."""
+    rows = [e for e in app_tables.events.search(card=c, kind="review") if (e["text"] or "").startswith(Metrics.SENT_BACK)]
+    rows.sort(key=lambda e: e["created"])
+    out = []
+    for e in rows:
+        reason = (e["text"] or "")[len(Metrics.SENT_BACK):].lstrip(" :")
+        out.append({"who": C.name_of(e["actor_user"]) if e["actor_user"] is not None else "A reviewer",
+                    "when": C.iso(e["created"]) or "", "reason": reason})
+    return out
+
+
+def packet(c):
+    """One card in the review lane: the card, the latest hand-in note, links, risk/verify answers, wait, send-backs."""
+    d = M.card_dict(c, full=True)
+    subs = [e for e in app_tables.events.search(card=c, kind="submit")]
+    subs.sort(key=lambda e: e["created"], reverse=True)
+    sub = subs[0] if subs else None
+    gates = d["gates"] or {}
+    facts = []
+    for gt in Gates.GATES:
+        if gt["id"] in ("risk", "verify", "scope") and gates.get(gt["id"]) is not None:
+            facts.append({"name": gt["name"], "text": gt["opts"][gates[gt["id"]]], "level": gates[gt["id"]]})
+    since = c["review_at"] or c["moved_at"]
+    fb = review_feedback(c)
+    return {"card": {k: d[k] for k in ("id", "key", "title", "type", "priority", "points", "assignee", "acc_done", "acc_total",
+                                       "links", "blocked", "blocked_reason", "review_at", "epic")},
+            "acceptance": d["acceptance"],
+            "summary": (sub["text"] or "") if sub is not None else "",
+            "by": M.person(sub["actor_user"], sub["actor_agent"]) if sub is not None else d["assignee"],
+            "submitted": C.iso(sub["created"]) if sub is not None else C.iso(since),
+            "wait": round(Metrics._hours(since, C.now()), 1) if since is not None else 0,
+            "facts": facts, "sent_back": len(fb), "last_feedback": fb[-1] if fb else None}
+
+
+@anvil.server.callable(require_user=True)
+def get_review(team_id):
+    """The review lane: every card in Review, oldest first, as review packets, plus the crew's review health."""
+    t, me, role = M.access(team_id)
+    rows = list(app_tables.cards.search(team=t, status="review"))
+    rows.sort(key=lambda c: c["review_at"] or c["moved_at"] or C.now())
+    stats = Metrics.review_stats(t)
+    return {"crew": {"id": t.get_id(), "key": t["key"], "name": t["name"], "demo": bool(t["is_demo"])},
+            "packets": [packet(c) for c in rows[:60]], "stats": stats["crew"]}
+
+
+@anvil.server.callable(require_user=True)
+def review_card(card_id, verdict, reason=""):
+    """A human's verdict on a card in Review. verdict: 'approve' (-> Done; a note is optional) or 'send_back'
+    (-> Doing; a reason of 10+ characters, which the agent reads in its brief under Review feedback)."""
+    c, t, me, role = M.card_access(card_id)
+    if c["status"] != "review":
+        return C.fail("%s isn't in Review any more (it's in %s). Reload the lane." % (M.card_key(c), M.STATUS_LABEL.get(c["status"], c["status"])))
+    note = C.text(reason, 1500, multiline=True)
+    if verdict == "approve":
+        apply_move(c, "done", user=me)
+        if note:
+            M.log(t, "comment", note, card=c, user=me)
+        return C.ok(card=M.card_dict(c), message="%s approved." % M.card_key(c))
+    if verdict != "send_back":
+        return C.fail("Approve or send back.")
+    if len(note) < 10:
+        return C.fail("Say what to fix (10 characters or more). The agent reads it before it tries again.")
+    apply_move(c, "doing", user=me)
+    M.log(t, "review", "%s: %s" % (Metrics.SENT_BACK, note), card=c, user=me)
+    who = c["assignee_agent"]["name"] if c["assignee_agent"] is not None else C.name_of(c["assignee_user"]) if c["assignee_user"] is not None else "the crew"
+    return C.ok(card=M.card_dict(c), message="%s went back to %s with your notes." % (M.card_key(c), who))

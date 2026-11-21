@@ -1672,3 +1672,49 @@ anvil-dropzone { display: contents; }
 .aa-rung .anvil-role-rung-name { font: 700 .75rem/1 var(--font-display); letter-spacing: .14em; }
 @media (max-width: 720px) { .aa-rung .anvil-role-rung-name { font-size: .75rem; letter-spacing: .02em; } }
 
+
+/* review lane, standup, public status page, trust meter (2026-11-20) */
+.anvil-role-rv-kpis, .anvil-role-su-kpis, .anvil-role-st-kpis { margin: 0 0 16px; }
+.rv-keys kbd { font: 400 .95rem/1 var(--font-lcd); border: 1px solid var(--c-edge); border-radius: 2px; padding: 1px 5px; background: var(--c-surface-2); }
+.anvil-role-rv-item, .rv-item { display: grid; gap: 8px; padding: 12px; margin: 0 0 10px; border: 2px solid var(--c-line); border-radius: 3px; background: var(--c-surface);
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out); }
+.rv-item.on, .anvil-role-on > .rv-item, .rv-item:focus-within { border-color: var(--c-edge); box-shadow: 4px 4px 0 var(--c-accent); }
+.rv-top, .rv-by, .rv-acts, .rv-facts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.rv-top .ui-spacer { flex: 1; }
+.rv-key { text-decoration: none; }
+.rv-key .anvil-role-chip-key { font: 400 1.1rem/1 var(--font-lcd); color: var(--c-ink); letter-spacing: .04em; }
+.anvil-role-rv-title > button { all: unset; display: block; cursor: pointer; font: 600 1.05rem/1.3 var(--font-body); color: var(--c-ink); overflow-wrap: anywhere; white-space: normal; }
+.anvil-role-rv-title > button:focus-visible { outline: 3px solid color-mix(in srgb, var(--c-brand) 60%, transparent); outline-offset: 2px; }
+.anvil-role-rv-wait, .anvil-role-rv-fact, .anvil-role-rv-backs { font: 400 .95rem/1 var(--font-lcd); letter-spacing: .05em; text-transform: uppercase; padding: 3px 6px 2px; border: 1px solid currentColor; border-radius: 2px; white-space: nowrap; }
+.anvil-role-rv-wait.anvil-role-ok, .anvil-role-rv-fact.anvil-role-good { color: var(--c-good); }
+.anvil-role-rv-wait.anvil-role-warn, .anvil-role-rv-fact.anvil-role-warn { color: var(--c-warn); }
+.anvil-role-rv-wait.anvil-role-bad { color: var(--c-on-status); background: var(--c-bad); border-color: var(--c-bad); }
+.anvil-role-rv-backs { color: var(--c-bad); }
+.rv-by .anvil-label { display: inline; font-size: .9rem; color: var(--c-muted); }
+.rv-summary { padding: 8px 10px; border-left: 4px solid var(--c-accent); background: var(--c-surface-2); font-size: .92rem; overflow-wrap: anywhere; }
+.rv-summary p { margin: 0 0 6px; } .rv-summary p:last-child { margin: 0; }
+.anvil-role-rv-gates > div { display: flex; gap: 6px; flex-wrap: wrap; }
+.anvil-role-rv-gates .st-line { padding: 0; border: 0; }
+.anvil-role-rv-gates .anvil-role-st-text { font: 400 .95rem/1 var(--font-lcd); padding: 3px 6px 2px; border: 1px solid var(--c-line); border-radius: 2px; }
+.anvil-role-rv-links > div { display: flex; gap: 10px; flex-wrap: wrap; }
+.anvil-role-rv-links .anvil-role-btn { display: none; }
+.rv-fb, .su-note { padding: 8px 10px; border-left: 4px solid var(--c-bad); background: var(--c-surface-2); font-size: .9rem; }
+.su-note { border-left-color: var(--c-accent); margin-top: 8px; }
+.anvil-role-rv-fbtext { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sb-quick { margin: 4px 0 10px; }
+.st-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px dashed var(--c-line); min-width: 0; }
+.st-line:last-child { border-bottom: 0; }
+.anvil-role-st-key { font: 400 1rem/1 var(--font-lcd); color: var(--c-muted); letter-spacing: .04em; white-space: nowrap; }
+.anvil-role-st-text { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.anvil-role-st-text.anvil-role-good { color: var(--c-ink); } .anvil-role-st-text.anvil-role-bad, .anvil-role-st-text.anvil-role-stuck { color: var(--c-bad); }
+.anvil-role-st-sub { font: 400 .95rem/1 var(--font-lcd); color: var(--c-muted); letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.su-grid, .st-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.anvil-role-su-people > div { display: grid; gap: 14px; }
+.su-hd { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+.anvil-role-su-md { font: 400 1rem/1.35 var(--font-lcd); background: #07070d; color: #b4ff1f; padding: 10px 12px; border-radius: 2px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow-y: auto; }
+.anvil-role-st-updated { font: 400 1.05rem/1 var(--font-lcd); color: var(--c-good); letter-spacing: .06em; }
+.st-made { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 18px; padding: 12px; border: 2px dashed var(--c-edge); border-radius: 3px; font-size: .9rem; color: var(--c-muted); }
+.dk-lane { margin-top: 10px; }
+.ag-trust { margin-top: 2px; }
+.ag-trust-h { display: block; font: 700 .75rem/1.4 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--c-muted); margin-bottom: 4px; }
+@media (max-width: 900px) { .su-grid, .st-grid { grid-template-columns: 1fr; } }

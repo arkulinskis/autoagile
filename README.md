@@ -35,8 +35,22 @@ re-assigns it); filters (All / Mine / Humans / Agents) and the **filter language
 is:blocked is:agent is:human is:mine is:unestimated is:ready`, plus words); aging on Doing/Review cards; blocked cards
 striped; phones show one column at a time.
 
+**Review lane** (`#review`, 2026-11-20): every card in Review as a review packet, oldest first: the hand-in note
+(markdown), links (PR), acceptance x/y, the scope/risk/verify gate answers, how long it has waited (amber after 4 h, red
+after a day) and how often it was sent back. Approve, or **Send back with a reason** (10+ characters, quick buttons for
+common ones); the reason is logged (event kind `review`) and shows in the agent's brief under "Review feedback". Keys:
+J/K move, A approve, S send back, O open. LCDs: waiting now, oldest wait, median review wait, approved first time, sent
+back (30 days). The card page's Send back uses the same dialog. Agents can add `tested` and `risk` to `submit`.
+
+**Trust meter** (Agents page): per agent over 30 days, approved first time (%), sent back, median review wait.
+
+**Standup** (`#standup`, `#standup/7`): the standup that writes itself from the board, per person and agent: shipped,
+in review, doing (stuck after 3 days), blocked, latest note; "Copy for Slack" gives markdown. **Public status link**
+(`#status/<code>`, opt-in per crew, signed out works): shipped this week, in progress, in review, blocked count; keys,
+titles and first names only. Codes live in app_settings (`status:<code>`, `status_of:<team id>`). Demo: `#status/NOVA4LIVE`.
+
 **Command palette**: Ctrl K (or `/` when not typing) jumps to any page or card, or adds a card with the quick-add syntax.
-`g` + a letter jumps too (`g b` board, `g l` backlog, `g r` reports, `g q` requests...).
+`g` + a letter jumps too (`g b` board, `g l` backlog, `g v` review lane, `g u` standup, `g r` reports, `g q` requests...).
 
 **Backlog** (`#backlog`): a tracker-style ranked list (top / up / down), filters (unestimated, agent-ready, bugs, and the
 filter language), quick

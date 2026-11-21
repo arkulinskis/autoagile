@@ -39,6 +39,7 @@ class Deck(DeckTemplate):
         self.needs_panel.items = needs
         self.needs_empty.visible = not needs
         self.needs_extra.text = "%d waiting" % len(needs)
+        self.lane_link.visible = bool(d["review"])
         self.mine_panel.items = d["mine"]
         self.mine_empty.visible = not d["mine"]
         self.mine_extra.text = str(len(d["mine"]))

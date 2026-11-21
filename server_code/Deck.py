@@ -43,7 +43,7 @@ def get_deck(team_id):
     stale_review = [c for c in review if (M.days_since(c["review_at"] or c["moved_at"]) or 0) > 1]
     if stale_review:
         alerts.append({"level": "warn", "text": "%d card%s waiting over a day for review. Agents are blocked on you." %
-                       (len(stale_review), "" if len(stale_review) == 1 else "s"), "go": "board"})
+                       (len(stale_review), "" if len(stale_review) == 1 else "s"), "go": "review"})
     unest = [c for c in cards if c["status"] == "ready" and c["points"] is None]
     if unest:
         alerts.append({"level": "info", "text": "%d Ready card%s not estimated yet. Run the gates." %

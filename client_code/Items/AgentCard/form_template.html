@@ -4,6 +4,7 @@
     <div class="grow"><anvil-component type="Label" name="aname" prop:role='["ag-name"]' bind:text="self.item['name']"></anvil-component><div class="small muted"><span class="aa-led" anvil:name="led"></span> <anvil-component type="Label" name="seen" prop:role='["inline"]'></anvil-component></div></div>
   </div>
   <anvil-component type="RepeatingPanel" name="stats_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["ag-stats"]'></anvil-component>
+  <div class="ag-trust"><span class="ag-trust-h">Trust meter · 30 days</span><anvil-component type="RepeatingPanel" name="trust_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["ag-stats"]'></anvil-component></div>
   <anvil-component type="RepeatingPanel" name="cur_panel" prop:item_template="AutoAgile.Items.FeedLine" prop:role='["ag-cur"]'></anvil-component>
   <p class="faint small" anvil:name="no_card">No card right now.</p>
   <p class="small muted ag-tok"><i class="ic ic-key"></i> <anvil-component type="Label" name="tok" prop:role='["inline"]'></anvil-component></p>

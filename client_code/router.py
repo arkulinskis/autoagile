@@ -28,11 +28,14 @@ PAGES = {
     "insights": ("user", "Insights"),
     "reports": ("user", "Reports"),
     "requests": ("user", "Requests"),
+    "review": ("user", "Review lane"),
+    "standup": ("user", "Standup"),
+    "status": (None, "Crew status"),
     "ask": ("user", "Ask a crew"),
     "import": ("user", "Import and export"),
     "crew": ("user", "Crew"),
 }
-NAV = [("deck", "Deck", "deck"), ("board", "Board", "board"), ("backlog", "Backlog", "list"), ("plan", "Plan", "calendar"),
+NAV = [("deck", "Deck", "deck"), ("board", "Board", "board"), ("backlog", "Backlog", "list"), ("review", "Review", "check"), ("plan", "Plan", "calendar"),
        ("agents", "Agents", "bot"), ("reports", "Reports", "chart")]
 APP_NAME = "AutoAgile"
 HOME = "deck"
@@ -77,6 +80,15 @@ def _form(name):
     if name == "reports":
         from .Pages.Reports import Reports
         return Reports
+    if name == "review":
+        from .Pages.Review import Review
+        return Review
+    if name == "standup":
+        from .Pages.Standup import Standup
+        return Standup
+    if name == "status":
+        from .Pages.Status import Status
+        return Status
     if name == "requests":
         from .Pages.Requests import Requests
         return Requests

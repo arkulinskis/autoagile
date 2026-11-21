@@ -240,3 +240,45 @@ def get_insights(team_id):
                       "agent_review_hours": review_wait([c for c in recent if c["assignee_agent"] is not None]),
                       "human_review_hours": review_wait([c for c in recent if c["assignee_agent"] is None])},
             "aging": aging[:12], "done_total": len(done)}
+
+
+# ------------------------------------------------------------------------------------------- review health
+SENT_BACK = "Sent back"  # the start of every send-back event's text (kind "review"); Cards.review_card writes it
+
+
+def _hours(a, b):
+    return max(0.0, (b - a).total_seconds() / 3600.0)
+
+
+def review_stats(t, days=30):
+    """How review is going over the last `days` days: per agent (the trust meter) and for the whole crew.
+
+    first_pass: share of the cards finished in the window that were never sent back; sent_back: send-backs in the
+    window; wait: median hours between Review and Done. Built from the cards' timestamps and the "review" events,
+    so there is nothing extra to keep in step. Agents with no finished card get None (the page shows a dash)."""
+    since = C.now() - dt.timedelta(days=days)
+    backs = [e for e in app_tables.events.search(team=t, kind="review")
+             if e["created"] is not None and e["created"] >= since and (e["text"] or "").startswith(SENT_BACK)]
+    back_cards = {}
+    for e in backs:
+        if e["card"] is not None:
+            back_cards[e["card"].get_id()] = back_cards.get(e["card"].get_id(), 0) + 1
+    done = [c for c in app_tables.cards.search(team=t, status="done") if c["done_at"] is not None and c["done_at"] >= since]
+
+    def block(cards, n_back):
+        waits = [_hours(c["review_at"], c["done_at"]) for c in cards if c["review_at"] is not None]
+        clean = [c for c in cards if c.get_id() not in back_cards]
+        return {"done": len(cards), "sent_back": n_back,
+                "first_pass": int(round(100.0 * len(clean) / len(cards))) if cards else None,
+                "wait": round(percentile(waits, 0.5), 1) if waits else None}
+
+    crew = block(done, len(backs))
+    agents = {}
+    for a in app_tables.agents.search(team=t):
+        mine = [c for c in done if c["assignee_agent"] == a]
+        n_back = len([e for e in backs if e["card"] is not None and e["card"]["assignee_agent"] == a])
+        agents[a.get_id()] = block(mine, n_back)
+    waiting = [c for c in app_tables.cards.search(team=t, status="review")]
+    oldest = max([_hours(c["review_at"] or c["moved_at"] or C.now(), C.now()) for c in waiting] or [0])
+    crew.update(in_review=len(waiting), oldest=round(oldest, 1) if waiting else None, days=days)
+    return {"crew": crew, "agents": agents}

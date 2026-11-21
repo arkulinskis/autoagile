@@ -79,8 +79,10 @@ def load():
         u = app_tables.users.get(email=email) or app_tables.users.add_row(email=email, enabled=False)
         u.update(display_name=name, is_demo=True, signed_up=now - dt.timedelta(days=170))
         U[key] = u
-    _nova(rng, U, now, today)
+    nova = _nova(rng, U, now, today)
     _pixl(rng, U, now, today)
+    from . import Standup
+    Standup.set_demo_code(nova, "NOVA4LIVE")  # the example public status link: #status/NOVA4LIVE
     C.set_setting("demo", "loaded")
     return counts()
 
@@ -401,6 +403,13 @@ def _nova(rng, U, now, today):
     E_(now - dt.timedelta(hours=40), "comment", "Blocked until the station sends the certificate. Pinged them again.", push["row"], user=U["ines"])
     E_(now - dt.timedelta(hours=2), "comment", "Looks good. One question on the paging before I approve.", hist["row"], user=U["maya"])
     E_(now - dt.timedelta(minutes=12), "agent_log", "Waiting for review feedback on %s." % M.card_key(mr), mr, agent=claude)
+    # Review Lane + trust meter: two agent cards were sent back once before they were approved
+    backs = ["Sent back: the empty state still says 'No messages yet' on a muted room, and there's no test for a room with 0 messages.",
+             "Sent back: works, but the PR also renames the settings table. Keep migrations out of agent PRs (house rules) and split it."]
+    sent = [s["row"] for s in cur if s["row"]["assignee_agent"] is not None and s["row"]["done_at"] and s["row"]["review_at"]]
+    for r, text in zip(sent[:2], backs):
+        E_(r["review_at"] - dt.timedelta(hours=5), "submit", "First hand-in. Tests green locally.", r, agent=r["assignee_agent"])
+        E_(r["review_at"] - dt.timedelta(hours=4), "review", text, r, user=U["maya"])
     for when, kind, text, card, user, agent in ev:
         M.log(t, kind, text, card=card, user=user, agent=agent, when=when, demo=True)
     return t

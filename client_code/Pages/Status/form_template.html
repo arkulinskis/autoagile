@@ -1,0 +1,32 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="ui-empty" anvil:name="bad_box"><i class="ic ic-lock"></i><h3>Status link off</h3><anvil-component type="Label" name="bad_text" prop:role='["small"]'></anvil-component><a class="ui-btn sm" href="#landing">What is AutoAgile?</a></div>
+      <div anvil:name="page">
+        <div class="aa-head">
+          <div><anvil-component type="Label" name="title" prop:role='["page-title"]'></anvil-component><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+          <div class="ui-row"><anvil-component type="Label" name="updated" prop:role='["st-updated"]'></anvil-component></div>
+        </div>
+        <div class="aa-demo-note" anvil:name="demo_note"><b>EXAMPLE CREW</b> // Nova FM is a made-up crew that shows what a status link looks like.</div>
+        <anvil-component type="RepeatingPanel" name="kpi_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "st-kpis"]'></anvil-component>
+        <div class="st-grid">
+          <section class="aa-win lime"><header class="aa-win-bar"><span>Shipped this week</span><em><anvil-component type="Label" name="shipped_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="shipped_panel" prop:item_template="AutoAgile.Items.StatusLine"></anvil-component>
+            <p class="small muted flat" anvil:name="shipped_empty">Nothing shipped in the last 7 days yet.</p>
+          </div></section>
+          <div class="ui-stack">
+            <section class="aa-win cyan"><header class="aa-win-bar"><span>Working on now</span><em><anvil-component type="Label" name="doing_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="doing_panel" prop:item_template="AutoAgile.Items.StatusLine"></anvil-component>
+              <p class="small muted flat" anvil:name="doing_empty">Nothing in progress right now.</p>
+            </div></section>
+            <section class="aa-win warn"><header class="aa-win-bar"><span>Waiting for review</span><em><anvil-component type="Label" name="review_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+              <anvil-component type="RepeatingPanel" name="review_panel" prop:item_template="AutoAgile.Items.StatusLine"></anvil-component>
+              <p class="small muted flat" anvil:name="review_empty">Nothing waiting.</p>
+            </div></section>
+          </div>
+        </div>
+        <div class="st-made"><span>This page updates itself from the crew's board. Humans and AI agents work side by side on it.</span> <a class="ui-btn sm primary" href="#landing"><i class="ic ic-zap"></i>Run your crew on AutoAgile, free</a></div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

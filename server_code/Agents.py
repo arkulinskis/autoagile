@@ -11,7 +11,7 @@ with `Authorization: Bearer <token>`:
   POST claim    {key}            assign to itself and move to Doing (respects its WIP and the column's)
   POST log      {key, text}      a progress note on the card's timeline
   POST check    {key, index, done}  tick an acceptance criterion
-  POST submit   {key, summary, links}  hand in: moves to Review; only a human moves it to Done
+  POST submit   {key, summary, tested?, risk?, links}  hand in: moves to Review; only a human moves it to Done
   POST release  {key, reason}    give the card back (to Ready)
   POST propose  {title, body, type}  suggest a new card (lands in the Backlog, labelled agent-proposed)
   GET  manifest (no token)       this list as JSON
@@ -30,6 +30,7 @@ from . import Model as M
 from . import Gates
 from . import Cards
 from . import Alerts
+from . import Metrics
 
 KINDS = ["Claude Code", "Codex", "Cursor agent", "Copilot agent", "Devin", "Custom agent"]
 OPS = {"whoami": "GET", "next": "GET", "cards": "GET", "card": "GET", "claim": "POST", "log": "POST", "check": "POST",
@@ -42,7 +43,7 @@ DOCS = {
     "claim": "Take a Ready card: {\"key\": \"NOVA-12\"}. Moves it to Doing.",
     "log": "Add a progress note: {\"key\", \"text\"}.",
     "check": "Tick an acceptance criterion: {\"key\", \"index\": 0, \"done\": true}.",
-    "submit": "Hand in for human review: {\"key\", \"summary\", \"links\": [{\"label\", \"url\"}]}. Moves it to Review.",
+    "submit": "Hand in for human review: {\"key\", \"summary\", \"tested\" (optional), \"risk\": \"low|medium|high\" (optional), \"links\": [{\"label\", \"url\"}]}. Moves it to Review. If a human sends it back, the reasons are in the card's brief under Review feedback.",
     "release": "Give a card back to Ready: {\"key\", \"reason\"}.",
     "propose": "Suggest a new card: {\"title\", \"body\", \"type\": \"story|bug|task|spike|chore\"}. Lands in the Backlog.",
 }
@@ -148,7 +149,9 @@ def delete_agent(agent_id):
 @anvil.server.callable(require_user=True)
 def get_agents(team_id):
     t, me, role = M.access(team_id)
-    agents = sorted([M.agent_dict(a) for a in app_tables.agents.search(team=t)], key=lambda a: a["name"].lower())
+    trust = Metrics.review_stats(t)
+    agents = sorted([dict(M.agent_dict(a), trust=trust["agents"].get(a.get_id())) for a in app_tables.agents.search(team=t)],
+                    key=lambda a: a["name"].lower())
     feed = [e for e in app_tables.events.search(team=t) if e["actor_agent"] is not None]
     feed.sort(key=lambda e: e["created"], reverse=True)
     review = [c for c in app_tables.cards.search(team=t, status="review") if c["assignee_agent"] is not None]
@@ -156,7 +159,7 @@ def get_agents(team_id):
     ready = [c for c in app_tables.cards.search(team=t, status="ready") if Gates.readiness(M.card_dict(c, full=True))["ready"]]
     return {"crew": {"id": t.get_id(), "key": t["key"], "name": t["name"], "demo": bool(t["is_demo"])},
             "agents": agents, "kinds": KINDS, "feed": [M.event_dict(e) for e in feed[:40]],
-            "review": [M.card_dict(c) for c in review], "agent_ready": len(ready), "rules": t["agent_rules"] or "",
+            "review": [M.card_dict(c) for c in review], "review_health": trust["crew"], "agent_ready": len(ready), "rules": t["agent_rules"] or "",
             "ops": [{"op": k, "method": v, "doc": DOCS[k]} for k, v in OPS.items()]}
 
 
@@ -279,6 +282,12 @@ def agent_op(a, op, data=None, base=None):
         summary = C.text(data.get("summary"), 3000, multiline=True)
         if len(summary) < 10:
             return _err("Write a summary (10 characters or more): what changed and how you tested it.")
+        tested = C.text(data.get("tested"), 500, multiline=True)
+        risk = C.text(data.get("risk"), 20).lower()
+        if tested:
+            summary += "\n\nTested: " + tested
+        if risk in ("low", "medium", "high"):
+            summary += "\nRisk: " + risk
         links = Cards.clean_links(list(c["links"] or []) + list(data.get("links") or []))
         c.update(links=links, updated=C.now())
         Cards.apply_move(c, "review", agent=a)

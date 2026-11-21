@@ -286,7 +286,12 @@ class Card(CardTemplate):
 
     @handle("send_back", "click")
     def send_back_click(self, **event_args):
-        self._move("doing")
+        c = self.st["card"]
+        from ...Dialogs.SendBack import SendBack
+        r = alert(SendBack(card_id=c["id"], key=c["key"], title=c["title"]), buttons=[], role="app-dialog")
+        if r:
+            state.toast(r.get("message") or "Sent back", "ok")
+            self._load()
 
     def _field_change(self, **event_args):
         sender = event_args["sender"]

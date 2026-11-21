@@ -11,6 +11,7 @@ THEMES = ["auto", "light", "dark"]
 # Ctrl K palette entries and the g-chords: (address, label, icon, chord)
 GO = [("deck", "Deck", "deck", "g d"), ("board", "Board", "board", "g b"), ("backlog", "Backlog", "list", "g l"),
       ("backlog/party", "Estimation Party", "gate", ""), ("plan", "Plan", "calendar", "g p"), ("reports", "Reports", "chart", "g r"),
+      ("review", "Review lane", "check", "g v"), ("standup", "Standup", "megaphone", "g u"),
       ("requests", "Requests", "flag", "g q"), ("agents", "AI agents", "bot", "g a"), ("insights", "Insights", "chart", "g i"),
       ("crew", "Crew settings", "users", "g s"), ("import", "Import and export", "layers", "g x")]
 

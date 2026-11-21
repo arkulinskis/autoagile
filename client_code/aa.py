@@ -278,3 +278,17 @@ def rave(title, sub=""):
 
 def api_base():
     return window.location.origin + "/_/api"
+
+
+def hours_text(h):
+    """3.5 -> '4h', 30 -> '1d 6h', 0.2 -> '12m', None -> '--' (review waits)."""
+    if h is None:
+        return "--"
+    h = float(h)
+    if h < 1:
+        return "%dm" % max(1, int(round(h * 60)))
+    if h < 24:
+        return "%dh" % int(round(h))
+    d = int(h // 24)
+    rest = int(round(h - d * 24))
+    return "%dd" % d + (" %dh" % rest if rest else "")

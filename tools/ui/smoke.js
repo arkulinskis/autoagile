@@ -64,7 +64,7 @@
   }
   try {
     // signed out: public pages, and member pages send people to sign in
-    for (const h of ['#landing', '#auth', '#auth/signup']) await open(h);
+    for (const h of ['#landing', '#auth', '#auth/signup', '#status/NOVA4LIVE', '#status/NOPE']) await open(h);
     await open('#deck', '#deck');  // the address stays; the Auth page shows
     if (!$('.au-card')) bad.push('#deck signed out did not show the sign-in page');
 
@@ -72,7 +72,7 @@
     await signUp('Smoke Tester', 'smoke' + Date.now() + '@example.com');
     const member = ['#deck', '#board', '#backlog', '#backlog/party', '#plan/level', '#plan/sprints', '#plan/quarter', '#plan/year', '#plan/epics',
       '#agents', '#insights', '#reports/burnup', '#reports/forecast', '#reports/flow', '#reports/cycle', '#reports/epics', '#reports/mix',
-      '#requests', '#import', '#crew', '#crew/new', '#crew/join', '#profile', '#landing'];
+      '#requests', '#review', '#standup', '#standup/7', '#import', '#crew', '#crew/new', '#crew/join', '#profile', '#landing'];
     for (const h of member) await open(h);
     await open('#board');
     const card = $('a.aa-card');

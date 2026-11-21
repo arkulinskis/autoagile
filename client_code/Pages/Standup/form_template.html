@@ -1,0 +1,46 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><h1 class="aa-h1">Standup</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row">
+          <div class="ui-seg" role="group" aria-label="Period">
+            <anvil-component type="Button" name="d1" prop:text="Since last workday" prop:role='["seg"]'></anvil-component>
+            <anvil-component type="Button" name="d7" prop:text="7 days" prop:role='["seg"]'></anvil-component>
+          </div>
+          <anvil-component type="Button" name="copy_button" prop:text="Copy for Slack" prop:role='["btn", "btn-primary", "ic-copy"]'></anvil-component>
+        </div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <anvil-component type="RepeatingPanel" name="kpi_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "su-kpis"]'></anvil-component>
+      <div class="su-grid">
+        <div class="ui-stack">
+          <anvil-component type="RepeatingPanel" name="people_panel" prop:item_template="AutoAgile.Items.StandupPerson" prop:role='["su-people"]'></anvil-component>
+          <div class="ui-empty" anvil:name="people_empty"><i class="ic ic-clock"></i><h3>A quiet stretch</h3><p class="small">Nothing moved in this period. Try 7 days, or pull a card from the board.</p></div>
+          <section class="aa-win warn" anvil:name="orphan_win"><header class="aa-win-bar"><span>Blocked, nobody on it</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <anvil-component type="RepeatingPanel" name="orphan_panel" prop:item_template="AutoAgile.Items.StatusLine"></anvil-component>
+          </div></section>
+        </div>
+        <div class="ui-stack">
+          <section class="aa-win lime"><header class="aa-win-bar"><span>Skip the status meeting</span><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small flat-top">AutoAgile writes this from the board: who shipped what, what waits for review, what's stuck. Paste it in your team chat each morning instead of a standup call.</p>
+            <anvil-component type="Label" name="preview" prop:role='["su-md"]'></anvil-component>
+          </div></section>
+          <section class="aa-win cyan"><header class="aa-win-bar"><span>Public status link</span><em><anvil-component type="Label" name="link_state"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+            <p class="small muted flat-top">For managers, clients and other teams: a read-only page with what shipped this week, what's in progress and what waits for review. Card keys, titles and first names only, never descriptions or comments. Off until someone turns it on.</p>
+            <div anvil:name="link_on_box">
+              <anvil-component type="Label" name="link" prop:role='["rq-link"]'></anvil-component>
+              <div class="ui-row rq-linkacts">
+                <anvil-component type="Button" name="copy_link" prop:text="Copy link" prop:role='["btn", "btn-sm", "ic-copy"]'></anvil-component>
+                <a class="ui-btn sm" href="#status" anvil:name="view_link"><i class="ic ic-external"></i>View</a>
+                <anvil-component type="Button" name="new_link" prop:text="New link" prop:role='["btn", "btn-sm", "ic-refresh"]'></anvil-component>
+                <anvil-component type="Button" name="off_link" prop:text="Turn off" prop:role='["btn", "btn-sm", "btn-ghost"]'></anvil-component>
+              </div>
+            </div>
+            <anvil-component type="Button" name="on_link" prop:text="Turn on the status link" prop:role='["btn", "btn-sm", "btn-primary", "ic-globe"]'></anvil-component>
+          </div></section>
+        </div>
+      </div>
+    </div>
+  </anvil-block>
+</anvil-form>

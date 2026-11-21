@@ -1,0 +1,20 @@
+<anvil-form layout="AutoAgile.Layouts.Shell">
+  <anvil-block slot="content">
+    <div class="ui-wrap">
+      <div class="aa-head">
+        <div><h1 class="aa-h1">Review lane</h1><anvil-component type="Label" name="sub" prop:role='["aa-sub"]'></anvil-component></div>
+        <div class="ui-row">
+          <a class="ui-btn" href="#standup"><i class="ic ic-megaphone"></i>Standup</a>
+          <a class="ui-btn" href="#board"><i class="ic ic-board"></i>Board</a>
+        </div>
+      </div>
+      <div class="aa-demo-note" anvil:name="demo_note"><b>DEMO CREW</b> // a shared sandbox: everyone signed in can play here. <a href="#crew/new">Start your own crew</a> when you're ready.</div>
+      <anvil-component type="RepeatingPanel" name="kpi_panel" prop:item_template="AutoAgile.Items.Lcd" prop:role='["lcds", "rv-kpis"]'></anvil-component>
+      <section class="aa-win" anvil:name="lane_win"><header class="aa-win-bar"><span>Waiting for a human</span><em><anvil-component type="Label" name="lane_extra"></anvil-component></em><i></i><i></i><i></i></header><div class="aa-win-body">
+        <p class="rv-keys small muted flat-top"><kbd>J</kbd> <kbd>K</kbd> move · <kbd>A</kbd> approve · <kbd>S</kbd> send back · <kbd>O</kbd> open the card. Oldest first: the longer a card waits, the longer its agent sits idle.</p>
+        <anvil-component type="RepeatingPanel" name="lane_panel" prop:item_template="AutoAgile.Items.ReviewRow"></anvil-component>
+        <div class="ui-empty tight" anvil:name="lane_empty"><svg class="aa-smiley" width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#b4ff1f" stroke="#07070d" stroke-width="5"/><ellipse cx="35" cy="38" rx="6" ry="11" fill="#07070d"/><ellipse cx="65" cy="38" rx="6" ry="11" fill="#07070d"/><path d="M24 58 Q50 86 76 58" fill="none" stroke="#07070d" stroke-width="6" stroke-linecap="round"/></svg><h3>Review zero</h3><p class="small">Nothing is waiting for you. Agents hand work in with <code>POST /agent/submit</code>, and it lands here.</p><a class="ui-btn sm" href="#agents">Set up an agent</a></div>
+      </div></section>
+    </div>
+  </anvil-block>
+</anvil-form>

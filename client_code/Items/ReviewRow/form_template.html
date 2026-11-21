@@ -1,0 +1,28 @@
+<article class="rv-item">
+  <div class="rv-top">
+    <a href="#board" anvil:name="key_link" class="rv-key"><anvil-component type="Label" name="key" prop:role='["chip-key"]'></anvil-component></a>
+    <anvil-component type="Label" name="type_tag" prop:role='["aa-type"]'></anvil-component>
+    <anvil-component type="Label" name="pts" prop:role='["aa-pts"]'></anvil-component>
+    <span class="ui-spacer"></span>
+    <anvil-component type="Label" name="wait" prop:role='["rv-wait"]'></anvil-component>
+  </div>
+  <anvil-component type="Button" name="pick" prop:role='["rv-title"]'></anvil-component>
+  <div class="rv-by">
+    <anvil-component type="AutoAgile.Components.Who" name="who"></anvil-component>
+    <anvil-component type="Label" name="by" prop:role='["inline"]'></anvil-component>
+    <anvil-component type="Label" name="backs" prop:role='["rv-backs"]'></anvil-component>
+  </div>
+  <div class="rv-summary" anvil:name="summary_box"><anvil-component type="AutoAgile.Components.Md" name="summary"></anvil-component></div>
+  <p class="small faint flat" anvil:name="no_summary">No hand-in note. Ask for one: what changed and how it was tested.</p>
+  <div class="rv-facts">
+    <anvil-component type="Label" name="acc" prop:role='["rv-fact"]'></anvil-component>
+    <anvil-component type="RepeatingPanel" name="facts_panel" prop:item_template="AutoAgile.Items.StatusLine" prop:role='["rv-gates"]'></anvil-component>
+  </div>
+  <anvil-component type="RepeatingPanel" name="links_panel" prop:item_template="AutoAgile.Items.LinkRow" prop:role='["rv-links"]'></anvil-component>
+  <div class="rv-fb" anvil:name="fb_box"><anvil-component type="Label" name="fb_head" prop:role='["rq-anshead"]'></anvil-component><anvil-component type="Label" name="fb_text" prop:role='["rv-fbtext"]'></anvil-component></div>
+  <div class="rv-acts">
+    <anvil-component type="Button" name="approve" prop:text="Approve → Done" prop:role='["btn", "btn-sm", "btn-primary", "ic-check"]'></anvil-component>
+    <anvil-component type="Button" name="send_back" prop:text="Send back" prop:role='["btn", "btn-sm", "ic-back"]'></anvil-component>
+    <anvil-component type="Button" name="open" prop:text="Open card" prop:role='["btn", "btn-sm", "btn-ghost", "ic-arrow"]'></anvil-component>
+  </div>
+</article>
